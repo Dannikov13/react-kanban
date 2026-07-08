@@ -2,12 +2,9 @@ import KanbanBoard from '@/widgets/kanban-board/ui/KanbanBoard';
 
 const App = () => {
   return (
-    <>
+    <main className="mx-auto min-h-screen max-w-7xl bg-slate-50 p-6">
       <KanbanBoard />
-      <h1 className="text-4xl font-bold text-blue-500">
-        Kanban Board
-      </h1>
-    </>
+    </main>
   );
 };
 
