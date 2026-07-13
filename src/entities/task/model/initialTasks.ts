@@ -2,7 +2,7 @@ import type { Task } from './types';
 
 export const initialTasks: Task[] = [
   {
-    id: '1',
+    id: crypto.randomUUID(),
     title: 'Setup project',
     description: 'Configure project',
     priority: 'high',

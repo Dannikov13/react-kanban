@@ -1,2 +1,8 @@
-export type { Task, TaskStatus, TaskPriority } from './model/types';
+export type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  CreateTaskData,
+} from './model/types';
+
 export { initialTasks } from './model/initialTasks';
