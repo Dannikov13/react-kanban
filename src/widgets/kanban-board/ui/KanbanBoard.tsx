@@ -7,6 +7,19 @@ import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 const KanbanBoard = () => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
 
+  const moveTask = (id: Task['id'], newStatus: Task['status']) => {
+    setTasks((previousTasks) =>
+      previousTasks.map((task) =>
+        task.id === id
+          ? {
+              ...task,
+              status: newStatus,
+            }
+          : task,
+      ),
+    );
+  };
+
   const handleCreateTask = (data: CreateTaskData) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -29,11 +42,15 @@ const KanbanBoard = () => {
       <CreateTaskForm onCreateTask={handleCreateTask} />
 
       <section className="grid gap-6 md:grid-cols-3">
-        <TaskColumn title="Todo" tasks={todoTasks} />
+        <TaskColumn title="Todo" tasks={todoTasks} moveTask={moveTask} />
 
-        <TaskColumn title="In Progress" tasks={inProgressTasks} />
+        <TaskColumn
+          title="In Progress"
+          tasks={inProgressTasks}
+          moveTask={moveTask}
+        />
 
-        <TaskColumn title="Done" tasks={doneTasks} />
+        <TaskColumn title="Done" tasks={doneTasks} moveTask={moveTask} />
       </section>
     </>
   );
