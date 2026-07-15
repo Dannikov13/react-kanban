@@ -2,12 +2,12 @@ import TaskCard from '@/entities/task/ui/TaskCard/TaskCard';
 import type { Task } from '@/entities/task';
 
 interface TaskColumnProps {
-  // id: string;
   title: string;
+  MoveTask: (id: string, newStatus: Task['status']) => void;
   tasks: Task[];
 }
 
-const TaskColumn = ({ title, tasks }: TaskColumnProps) => {
+const TaskColumn = ({ title, MoveTask, tasks }: TaskColumnProps) => {
   return (
     <section className="min-h-96  rounded-xl bg-slate-100 p-4">
       <header className="mb-4 flex items-center justify-between">
@@ -30,7 +30,7 @@ const TaskColumn = ({ title, tasks }: TaskColumnProps) => {
 
       <div className="space-y-3">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} moveTask={MoveTask} />
         ))}
       </div>
     </section>
