@@ -1,36 +1,32 @@
 import TaskCard from '@/entities/task/ui/TaskCard/TaskCard';
 import type { Task } from '@/entities/task';
+import type { ColumnVariant } from '../model/types';
+import { columnStyles } from '../model/columnStyles';
 
 interface TaskColumnProps {
   title: string;
-  MoveTask: (id: string, newStatus: Task['status']) => void;
   tasks: Task[];
+  variant: ColumnVariant;
 }
 
-const TaskColumn = ({ title, MoveTask, tasks }: TaskColumnProps) => {
+const TaskColumn = ({ title, tasks, variant }: TaskColumnProps) => {
+  const { container, badge } = columnStyles[variant];
+
   return (
-    <section className="min-h-96  rounded-xl bg-slate-100 p-4">
-      <header className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+    <section className={`rounded-2xl ${container} p-5`}>
+      <header className="mb-5 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-slate-800">{title}</h2>
 
         <span
-          className="
-    rounded-full
-    bg-slate-200
-    px-2.5
-    py-1
-    text-xs
-    font-medium
-    text-slate-700
-  "
+          className={`flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-semibold ${badge}`}
         >
           {tasks.length}
         </span>
       </header>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} moveTask={MoveTask} />
+          <TaskCard key={task.id} task={task} />
         ))}
       </div>
     </section>
