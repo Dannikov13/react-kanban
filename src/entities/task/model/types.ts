@@ -6,6 +6,7 @@ export interface CreateTaskData {
   title: string;
   description?: string;
   priority: TaskPriority;
+  status: TaskStatus;
 }
 
 export interface Task {

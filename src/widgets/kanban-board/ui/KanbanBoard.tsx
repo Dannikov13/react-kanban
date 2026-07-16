@@ -26,7 +26,7 @@ const KanbanBoard = () => {
       title: data.title,
       description: data.description,
       priority: data.priority,
-      status: 'todo',
+      status: data.status,
       createdAt: Date.now(),
     };
 
@@ -42,15 +42,26 @@ const KanbanBoard = () => {
       <CreateTaskForm onCreateTask={handleCreateTask} />
 
       <section className="grid gap-6 md:grid-cols-3">
-        <TaskColumn title="Todo" tasks={todoTasks} moveTask={moveTask} />
+        <TaskColumn
+          title="Todo"
+          variant="todo"
+          tasks={todoTasks}
+          onMove={moveTask}
+        />
 
         <TaskColumn
           title="In Progress"
+          variant="in-progress"
           tasks={inProgressTasks}
-          moveTask={moveTask}
+          onMove={moveTask}
         />
 
-        <TaskColumn title="Done" tasks={doneTasks} moveTask={moveTask} />
+        <TaskColumn
+          title="Done"
+          variant="done"
+          tasks={doneTasks}
+          onMove={moveTask}
+        />
       </section>
     </>
   );
