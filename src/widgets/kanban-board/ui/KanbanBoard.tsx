@@ -21,6 +21,13 @@ const KanbanBoard = () => {
   };
 
   const handleDeleteTask = (taskId: Task['id']) => {
+    const isConfirmed = window.confirm(
+      'Are you sure you want to delete this task?',
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
   };
 
