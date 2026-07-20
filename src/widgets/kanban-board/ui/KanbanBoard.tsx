@@ -7,19 +7,6 @@ import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 const KanbanBoard = () => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
 
-  const moveTask = (id: Task['id'], newStatus: Task['status']) => {
-    setTasks((previousTasks) =>
-      previousTasks.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              status: newStatus,
-            }
-          : task,
-      ),
-    );
-  };
-
   const handleCreateTask = (data: CreateTaskData) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -33,8 +20,12 @@ const KanbanBoard = () => {
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
 
+  const handleDeleteTask = (taskId: Task['id']) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+  };
+
   const todoTasks = tasks.filter((task) => task.status === 'todo');
-  const inProgressTasks = tasks.filter((task) => task.status === 'in-progress');
+  const inProgressTasks = tasks.filter((task) => task.status === 'progress');
   const doneTasks = tasks.filter((task) => task.status === 'done');
 
   return (
@@ -46,21 +37,21 @@ const KanbanBoard = () => {
           title="Todo"
           variant="todo"
           tasks={todoTasks}
-          onMove={moveTask}
+          onDeleteTask={handleDeleteTask}
         />
 
         <TaskColumn
           title="In Progress"
-          variant="in-progress"
+          variant="progress"
           tasks={inProgressTasks}
-          onMove={moveTask}
+          onDeleteTask={handleDeleteTask}
         />
 
         <TaskColumn
           title="Done"
           variant="done"
           tasks={doneTasks}
-          onMove={moveTask}
+          onDeleteTask={handleDeleteTask}
         />
       </section>
     </>

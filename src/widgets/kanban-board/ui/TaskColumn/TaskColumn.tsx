@@ -1,15 +1,21 @@
 import TaskCard from '@/entities/task/ui/TaskCard/TaskCard';
 import type { Task } from '@/entities/task';
-import type { ColumnVariant } from '../model/types';
-import { columnStyles } from '../model/columnStyles';
+import type { ColumnVariant } from '@/widgets/kanban-board/model/types';
+import { columnStyles } from '@/widgets/kanban-board/model/columnStyles';
 
 interface TaskColumnProps {
   title: string;
   tasks: Task[];
   variant: ColumnVariant;
+  onDeleteTask: (taskId: Task['id']) => void;
 }
 
-const TaskColumn = ({ title, tasks, variant }: TaskColumnProps) => {
+const TaskColumn = ({
+  title,
+  tasks,
+  variant,
+  onDeleteTask,
+}: TaskColumnProps) => {
   const { container, badge } = columnStyles[variant];
 
   return (
@@ -26,7 +32,7 @@ const TaskColumn = ({ title, tasks, variant }: TaskColumnProps) => {
 
       <div className="space-y-4">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} onDeleteTask={onDeleteTask} />
         ))}
       </div>
     </section>
