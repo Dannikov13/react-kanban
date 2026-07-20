@@ -10,6 +10,7 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
     title: '',
     description: '',
     priority: 'medium',
+    status: 'todo',
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
