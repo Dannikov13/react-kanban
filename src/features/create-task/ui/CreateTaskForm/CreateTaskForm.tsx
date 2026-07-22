@@ -5,25 +5,26 @@ interface CreateTaskFormProps {
   onCreateTask: (data: CreateTaskData) => void;
 }
 
+const INITIAL_FORM_DATA: CreateTaskData = {
+  title: '',
+  description: '',
+  priority: 'medium',
+  status: 'todo',
+};
+
 const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
-  const [formData, setFormData] = useState<CreateTaskData>({
-    title: '',
-    description: '',
-    priority: 'medium',
-    status: 'todo',
-  });
+  const [formData, setFormData] = useState<CreateTaskData>(INITIAL_FORM_DATA);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!formData.title.trim()) {
+      return;
+    }
+
     onCreateTask(formData);
 
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-      status: 'todo',
-    });
+    setFormData(INITIAL_FORM_DATA);
   };
 
   const handleChange = (field: keyof CreateTaskData, value: string) => {
@@ -36,6 +37,7 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   return (
     <form
       onSubmit={handleSubmit}
+      disabled={!formData.title.trim()}
       className="mb-8 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
     >
       <h2 className="mb-6 text-2xl font-bold tracking-tight text-slate-900">
