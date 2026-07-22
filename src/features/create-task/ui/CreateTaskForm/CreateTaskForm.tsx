@@ -15,15 +15,14 @@ const INITIAL_FORM_DATA: CreateTaskData = {
 const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   const [formData, setFormData] = useState<CreateTaskData>(INITIAL_FORM_DATA);
 
+  const isTitleEmpty = !formData.title.trim().length >= 3;
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!formData.title.trim()) {
+    if (isTitleEmpty) {
       return;
     }
-
     onCreateTask(formData);
-
     setFormData(INITIAL_FORM_DATA);
   };
 
@@ -37,7 +36,6 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      disabled={!formData.title.trim()}
       className="mb-8 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
     >
       <h2 className="mb-6 text-2xl font-bold tracking-tight text-slate-900">
@@ -117,7 +115,20 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
 
         <button
           type="submit"
-          className="mt-2 rounded-lg bg-slate-900 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-slate-700 hover:shadow-md"
+          disabled={isTitleEmpty}
+          className="
+  mt-2
+  rounded-lg
+  bg-slate-900
+  px-4
+  py-2
+  font-medium
+  text-white
+  transition
+  hover:bg-slate-700
+  disabled:cursor-not-allowed
+  disabled:bg-slate-400
+"
         >
           Create Task
         </button>
