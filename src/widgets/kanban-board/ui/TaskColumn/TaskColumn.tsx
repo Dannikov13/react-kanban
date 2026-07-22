@@ -33,14 +33,26 @@ const TaskColumn = ({
       </header>
 
       <div className="space-y-4">
-        {tasks.map((task) => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            onDeleteTask={onDeleteTask}
-            onUpdateTask={onUpdateTask}
-          />
-        ))}
+        {tasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2">
+            <p className="text-lg">📭</p>
+            <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-slate-500">
+              📭 No tasks yet
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              Create your first task.
+            </p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onDeleteTask={onDeleteTask}
+              onUpdateTask={onUpdateTask}
+            />
+          ))
+        )}
       </div>
     </section>
   );
