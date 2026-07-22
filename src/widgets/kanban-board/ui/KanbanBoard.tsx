@@ -1,11 +1,11 @@
-import { useState } from 'react';
 import type { CreateTaskData, Task } from '@/entities/task';
-import { initialTasks } from '@/entities/task';
 import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
+import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
+import { initialTasks } from '@/entities/task/model/initialTasks';
 
 const KanbanBoard = () => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useLocalStorage('tasks', initialTasks);
 
   const handleCreateTask = (data: CreateTaskData) => {
     const newTask: Task = {
@@ -19,7 +19,6 @@ const KanbanBoard = () => {
 
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
-
   const handleDeleteTask = (taskId: Task['id']) => {
     const isConfirmed = window.confirm(
       'Are you sure you want to delete this task?',
@@ -31,8 +30,21 @@ const KanbanBoard = () => {
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
   };
 
+  const handleUpdateTask = (taskId: Task['id'], updatedData: Partial<Task>) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              ...updatedData,
+            }
+          : task,
+      ),
+    );
+  };
+
   const todoTasks = tasks.filter((task) => task.status === 'todo');
-  const inProgressTasks = tasks.filter((task) => task.status === 'progress');
+  const inProgressTasks = tasks.filter((task) => task.status === 'in-progress');
   const doneTasks = tasks.filter((task) => task.status === 'done');
 
   return (
@@ -45,6 +57,7 @@ const KanbanBoard = () => {
           variant="todo"
           tasks={todoTasks}
           onDeleteTask={handleDeleteTask}
+          onUpdateTask={handleUpdateTask}
         />
 
         <TaskColumn
@@ -52,6 +65,7 @@ const KanbanBoard = () => {
           variant="progress"
           tasks={inProgressTasks}
           onDeleteTask={handleDeleteTask}
+          onUpdateTask={handleUpdateTask}
         />
 
         <TaskColumn
@@ -59,6 +73,7 @@ const KanbanBoard = () => {
           variant="done"
           tasks={doneTasks}
           onDeleteTask={handleDeleteTask}
+          onUpdateTask={handleUpdateTask}
         />
       </section>
     </>

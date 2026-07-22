@@ -8,6 +8,7 @@ interface TaskColumnProps {
   tasks: Task[];
   variant: ColumnVariant;
   onDeleteTask: (taskId: Task['id']) => void;
+  onUpdateTask: (taskId: Task['id'], updatedData: Partial<Task>) => void;
 }
 
 const TaskColumn = ({
@@ -15,6 +16,7 @@ const TaskColumn = ({
   tasks,
   variant,
   onDeleteTask,
+  onUpdateTask,
 }: TaskColumnProps) => {
   const { container, badge } = columnStyles[variant];
 
@@ -32,7 +34,12 @@ const TaskColumn = ({
 
       <div className="space-y-4">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onDeleteTask={onDeleteTask} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            onDeleteTask={onDeleteTask}
+            onUpdateTask={onUpdateTask}
+          />
         ))}
       </div>
     </section>
