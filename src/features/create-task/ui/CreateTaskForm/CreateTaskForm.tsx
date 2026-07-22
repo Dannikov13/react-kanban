@@ -1,27 +1,29 @@
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import type { CreateTaskData } from '@/entities/task/model/types';
 
 interface CreateTaskFormProps {
   onCreateTask: (data: CreateTaskData) => void;
 }
 
+const INITIAL_FORM_DATA: CreateTaskData = {
+  title: '',
+  description: '',
+  priority: 'medium',
+  status: 'todo',
+};
+
 const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
-  const [formData, setFormData] = useState<CreateTaskData>({
-    title: '',
-    description: '',
-    priority: 'medium',
-  });
+  const [formData, setFormData] = useState<CreateTaskData>(INITIAL_FORM_DATA);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const isTitleEmpty = !formData.title.trim().length >= 3;
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    if (isTitleEmpty) {
+      return;
+    }
     onCreateTask(formData);
-
-    setFormData({
-      title: '',
-      description: '',
-      priority: 'medium',
-    });
+    setFormData(INITIAL_FORM_DATA);
   };
 
   const handleChange = (field: keyof CreateTaskData, value: string) => {
@@ -32,43 +34,105 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-6 flex flex-col gap-4">
-      <div>
-        <label htmlFor="title">Title</label>
+    <form
+      onSubmit={handleSubmit}
+      className="mb-8 max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+    >
+      <h2 className="mb-6 text-2xl font-bold tracking-tight text-slate-900">
+        Create Task
+      </h2>
 
-        <input
-          id="title"
-          type="text"
-          value={formData.title}
-          onChange={(e) => handleChange('title', e.target.value)}
-        />
-      </div>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="title" className="text-sm font-medium text-slate-700">
+            Title
+          </label>
 
-      <div>
-        <label htmlFor="description">Description</label>
+          <input
+            id="title"
+            type="text"
+            value={formData.title}
+            onChange={(e) => handleChange('title', e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          />
+        </div>
 
-        <textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => handleChange('description', e.target.value)}
-        />
-      </div>
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="description"
+            className="text-sm font-medium text-slate-700"
+          >
+            Description
+          </label>
 
-      <div>
-        <label htmlFor="priority">Priority</label>
+          <textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+            className="min-h-24 resize-none rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          />
+        </div>
 
-        <select
-          id="priority"
-          value={formData.priority}
-          onChange={(e) => handleChange('priority', e.target.value)}
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="priority"
+            className="text-sm font-medium text-slate-700"
+          >
+            Priority
+          </label>
+
+          <select
+            id="priority"
+            value={formData.priority}
+            onChange={(e) => handleChange('priority', e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label
+            htmlFor="status"
+            className="text-sm font-medium text-slate-700"
+          >
+            Status
+          </label>
+
+          <select
+            id="status"
+            value={formData.status}
+            onChange={(e) => handleChange('status', e.target.value)}
+            className="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+          >
+            <option value="todo">Todo</option>
+            <option value="in-progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isTitleEmpty}
+          className="
+  mt-2
+  rounded-lg
+  bg-slate-900
+  px-4
+  py-2
+  font-medium
+  text-white
+  transition
+  hover:bg-slate-700
+  disabled:cursor-not-allowed
+  disabled:bg-slate-400
+"
         >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
+          Create Task
+        </button>
       </div>
-
-      <button type="submit">Create task</button>
     </form>
   );
 };
