@@ -1,7 +1,7 @@
-import type { ColumnVariant } from './types';
+import type { TaskStatus } from '@/entities/task';
 
 export const columnStyles: Record<
-  ColumnVariant,
+  TaskStatus,
   {
     container: string;
     badge: string;
@@ -12,7 +12,7 @@ export const columnStyles: Record<
     badge: 'bg-slate-200 text-slate-700',
   },
 
-  progress: {
+  'in-progress': {
     container: 'bg-amber-50',
     badge: 'bg-amber-200 text-amber-800',
   },
