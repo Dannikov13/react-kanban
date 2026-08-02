@@ -1,8 +1,16 @@
-import type { CreateTaskData, Task } from '@/entities/task';
+import type { CreateTaskData, Task, TaskStatus } from '@/entities/task';
 import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { initialTasks } from '@/entities/task/model/initialTasks';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { DndContext } from '@dnd-kit/core';
+
+type TasksByStatus = {
+  todo: Task[];
+  'in-progress': Task[];
+  done: Task[];
+};
 
 const KanbanBoard = () => {
   const [tasks, setTasks] = useLocalStorage('tasks', initialTasks);
@@ -43,39 +51,85 @@ const KanbanBoard = () => {
     );
   };
 
-  const todoTasks = tasks.filter((task) => task.status === 'todo');
-  const inProgressTasks = tasks.filter((task) => task.status === 'in-progress');
-  const doneTasks = tasks.filter((task) => task.status === 'done');
+  const handleMoveTask = (taskId: Task['id'], newStatus: Task['status']) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              status: newStatus,
+            }
+          : task,
+      ),
+    );
+  };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const taskId = e.active.id;
+    const overId = e.over?.id;
+
+    if (!overId) {
+      return;
+    }
+
+    const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
+
+    if (statuses.includes(overId as TaskStatus)) {
+      handleMoveTask(taskId as string, overId as TaskStatus);
+      return;
+    }
+
+    const overTask = tasks.find((task) => task.id === overId);
+
+    if (!overTask) {
+      return;
+    }
+
+    handleMoveTask(taskId as string, overTask.status);
+  };
+
+  const tasksByStatus = tasks.reduce<TasksByStatus>(
+    (acc, task) => {
+      acc[task.status].push(task);
+
+      return acc;
+    },
+    {
+      todo: [],
+      'in-progress': [],
+      done: [],
+    },
+  );
 
   return (
     <>
       <CreateTaskForm onCreateTask={handleCreateTask} />
+      <DndContext onDragEnd={handleDragEnd}>
+        <section className="grid gap-6 md:grid-cols-3">
+          <TaskColumn
+            title="Todo"
+            variant="todo"
+            tasks={tasksByStatus.todo}
+            onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleUpdateTask}
+          />
+          <TaskColumn
+            title="In Progress"
+            variant="in-progress"
+            tasks={tasksByStatus['in-progress']}
+            onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleUpdateTask}
+          />
 
-      <section className="grid gap-6 md:grid-cols-3">
-        <TaskColumn
-          title="Todo"
-          variant="todo"
-          tasks={todoTasks}
-          onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleUpdateTask}
-        />
-
-        <TaskColumn
-          title="In Progress"
-          variant="progress"
-          tasks={inProgressTasks}
-          onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleUpdateTask}
-        />
-
-        <TaskColumn
-          title="Done"
-          variant="done"
-          tasks={doneTasks}
-          onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleUpdateTask}
-        />
-      </section>
+          <TaskColumn
+            title="Done"
+            variant="done"
+            tasks={tasksByStatus.done}
+            onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleUpdateTask}
+          />
+        </section>
+      </DndContext>
     </>
   );
 };

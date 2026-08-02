@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Task, TaskStatus } from '@/entities/task';
+import { useSortable } from '@dnd-kit/sortable';
 
 interface TaskCardProps {
   task: Task;
@@ -12,15 +13,28 @@ const priorityColors = {
   medium: 'bg-yellow-100 text-yellow-700',
   high: 'bg-red-100 text-red-700',
 };
+
 const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
-  const initialFormData = {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: task.id,
+    });
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [formData, setFormData] = useState({
     title: task.title,
     description: task.description,
     priority: task.priority,
     status: task.status,
+  });
+
+  const style = {
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      : undefined,
+    transition,
   };
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(initialFormData);
 
   const handleSave = () => {
     onUpdateTask(task.id, formData);
@@ -40,7 +54,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
 
   if (isEditing) {
     return (
-      <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+      <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <form
           className="flex flex-col gap-3"
           onSubmit={(e) => {
@@ -48,12 +62,10 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             handleSave();
           }}
         >
-          <label className="text-sm font-medium text-slate-700" htmlFor="title">
-            Title:
-          </label>
+          <label className="text-sm font-medium text-slate-700">Title:</label>
+
           <input
-            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-            id="title"
+            className="rounded-lg border border-slate-300 px-3 py-2"
             value={formData.title}
             onChange={(e) =>
               setFormData({
@@ -61,18 +73,14 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
                 title: e.target.value,
               })
             }
-            maxLength={100}
           />
 
-          <label
-            className="text-sm font-medium text-slate-700"
-            htmlFor="description"
-          >
+          <label className="text-sm font-medium text-slate-700">
             Description:
           </label>
+
           <textarea
-            className="min-h-24 rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-            id="description"
+            className="rounded-lg border border-slate-300 px-3 py-2"
             value={formData.description}
             onChange={(e) =>
               setFormData({
@@ -80,18 +88,14 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
                 description: e.target.value,
               })
             }
-            maxLength={500}
           />
 
-          <label
-            className="text-sm font-medium text-slate-700"
-            htmlFor="priority"
-          >
+          <label className="text-sm font-medium text-slate-700">
             Priority:
           </label>
+
           <select
-            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-            id="priority"
+            className="rounded-lg border border-slate-300 px-3 py-2"
             value={formData.priority}
             onChange={(e) =>
               setFormData({
@@ -105,15 +109,10 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             <option value="high">High</option>
           </select>
 
-          <label
-            className="text-sm font-medium text-slate-700"
-            htmlFor="status"
-          >
-            Status:
-          </label>
+          <label className="text-sm font-medium text-slate-700">Status:</label>
+
           <select
-            className="rounded-lg border border-slate-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-            id="status"
+            className="rounded-lg border border-slate-300 px-3 py-2"
             value={formData.status}
             onChange={(e) =>
               setFormData({
@@ -122,22 +121,23 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
               })
             }
           >
-            <option value="todo">To Do</option>
+            <option value="todo">Todo</option>
             <option value="in-progress">In Progress</option>
             <option value="done">Done</option>
           </select>
-          <div className="flex justify-end gap-2">
+
+          <div className="flex gap-2">
             <button
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 transition"
               type="submit"
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white"
             >
               Save
             </button>
 
             <button
-              className="rounded-lg border border-slate-300 px-4 py-2 hover:bg-slate-100 transition"
               type="button"
               onClick={handleCancel}
+              className="rounded-lg border px-4 py-2"
             >
               Cancel
             </button>
@@ -148,7 +148,13 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   }
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+    <article
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={style}
+      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+    >
       <h3 className="text-lg font-semibold text-slate-900">{task.title}</h3>
 
       {task.description && (
@@ -167,13 +173,14 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
 
       <button
         onClick={() => onDeleteTask(task.id)}
-        className="mt-4 rounded-lg bg-red-500 px-3 py-1 text-sm font-medium text-white transition hover:bg-red-600"
+        className="mt-4 rounded-lg bg-red-500 px-3 py-1 text-sm text-white"
       >
         Delete
       </button>
+
       <button
-        className="mt-4 rounded-lg bg-yellow-500 px-3 py-1 text-sm font-medium text-white transition hover:bg-yellow-600"
         onClick={() => setIsEditing(true)}
+        className="mt-4 ml-2 rounded-lg bg-yellow-500 px-3 py-1 text-sm text-white"
       >
         Edit
       </button>
