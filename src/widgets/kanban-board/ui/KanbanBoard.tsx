@@ -5,6 +5,7 @@ import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { initialTasks } from '@/entities/task/model/initialTasks';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 
 type TasksByStatus = {
   todo: Task[];
@@ -65,27 +66,34 @@ const KanbanBoard = () => {
   };
 
   const handleDragEnd = (e: DragEndEvent) => {
-    const taskId = e.active.id;
-    const overId = e.over?.id;
-
-    if (!overId) {
+    if (!e.over) {
       return;
     }
+
+    const taskId = String(e.active.id);
+    const overId = String(e.over.id);
 
     const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
-
     if (statuses.includes(overId as TaskStatus)) {
-      handleMoveTask(taskId as string, overId as TaskStatus);
+      handleMoveTask(taskId, overId as TaskStatus);
       return;
     }
 
+    const activeTask = tasks.find((task) => task.id === taskId);
     const overTask = tasks.find((task) => task.id === overId);
 
-    if (!overTask) {
+    if (!activeTask || !overTask) {
       return;
     }
 
-    handleMoveTask(taskId as string, overTask.status);
+    const oldIndex = tasks.findIndex((task) => task.id === taskId);
+    const newIndex = tasks.findIndex((task) => task.id === overId);
+
+    if (activeTask.status === overTask.status) {
+      setTasks((prevTasks) => arrayMove(prevTasks, oldIndex, newIndex));
+      return;
+    }
+    handleMoveTask(taskId, overTask.status);
   };
 
   const tasksByStatus = tasks.reduce<TasksByStatus>(
