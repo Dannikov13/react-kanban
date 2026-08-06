@@ -1,11 +1,10 @@
-import type { CreateTaskData, Task, TaskStatus } from '@/entities/task';
+import type { CreateTaskData, Task } from '@/entities/task';
 import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { initialTasks } from '@/entities/task/model/initialTasks';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 
 type TasksByStatus = {
   todo: Task[];
@@ -52,17 +51,37 @@ const KanbanBoard = () => {
     );
   };
 
-  const handleMoveTask = (taskId: Task['id'], newStatus: Task['status']) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              status: newStatus,
-            }
-          : task,
-      ),
-    );
+  const handleMoveTask = (taskId: Task['id'], overId: string) => {
+    setTasks((prevTasks) => {
+      const activeTask = prevTasks.find((task) => task.id === taskId);
+      const overTask = prevTasks.find((task) => task.id === overId);
+
+      if (!activeTask) {
+        return prevTasks;
+      }
+
+      if (!overTask) {
+        return prevTasks.map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                status: overId as Task['status'],
+                // ← здесь измени статус
+              }
+            : task,
+        );
+      }
+      const activeIndex = prevTasks.findIndex((task) => task.id === taskId);
+
+      const overIndex = prevTasks.findIndex((task) => task.id === overId);
+
+      console.log({
+        activeIndex,
+        overIndex,
+      });
+
+      return prevTasks;
+    });
   };
 
   const handleDragEnd = (e: DragEndEvent) => {
@@ -70,30 +89,7 @@ const KanbanBoard = () => {
       return;
     }
 
-    const taskId = String(e.active.id);
-    const overId = String(e.over.id);
-
-    const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
-    if (statuses.includes(overId as TaskStatus)) {
-      handleMoveTask(taskId, overId as TaskStatus);
-      return;
-    }
-
-    const activeTask = tasks.find((task) => task.id === taskId);
-    const overTask = tasks.find((task) => task.id === overId);
-
-    if (!activeTask || !overTask) {
-      return;
-    }
-
-    const oldIndex = tasks.findIndex((task) => task.id === taskId);
-    const newIndex = tasks.findIndex((task) => task.id === overId);
-
-    if (activeTask.status === overTask.status) {
-      setTasks((prevTasks) => arrayMove(prevTasks, oldIndex, newIndex));
-      return;
-    }
-    handleMoveTask(taskId, overTask.status);
+    handleMoveTask(String(e.active.id), String(e.over.id));
   };
 
   const tasksByStatus = tasks.reduce<TasksByStatus>(

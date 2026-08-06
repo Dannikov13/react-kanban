@@ -15,7 +15,7 @@ const INITIAL_FORM_DATA: CreateTaskData = {
 const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   const [formData, setFormData] = useState<CreateTaskData>(INITIAL_FORM_DATA);
 
-  const isTitleEmpty = !formData.title.trim().length >= 3;
+  const isTitleEmpty = !(formData.title.trim().length >= 3);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
