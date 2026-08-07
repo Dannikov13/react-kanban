@@ -1,10 +1,11 @@
-import type { CreateTaskData, Task } from '@/entities/task';
+import type { CreateTaskData, Task, TaskStatus } from '@/entities/task';
 import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { initialTasks } from '@/entities/task/model/initialTasks';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 
 type TasksByStatus = {
   todo: Task[];
@@ -54,33 +55,83 @@ const KanbanBoard = () => {
   const handleMoveTask = (taskId: Task['id'], overId: string) => {
     setTasks((prevTasks) => {
       const activeTask = prevTasks.find((task) => task.id === taskId);
-      const overTask = prevTasks.find((task) => task.id === overId);
 
       if (!activeTask) {
         return prevTasks;
       }
 
-      if (!overTask) {
+      const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
+
+      // Если бросили непосредственно на колонку
+      if (statuses.includes(overId as TaskStatus)) {
+        const newStatus = overId as TaskStatus;
+
+        if (activeTask.status === newStatus) {
+          return prevTasks;
+        }
+
         return prevTasks.map((task) =>
           task.id === taskId
             ? {
                 ...task,
-                status: overId as Task['status'],
-                // ← здесь измени статус
+                status: newStatus,
               }
             : task,
         );
       }
-      const activeIndex = prevTasks.findIndex((task) => task.id === taskId);
 
-      const overIndex = prevTasks.findIndex((task) => task.id === overId);
+      // Если бросили на другую карточку
+      const overTask = prevTasks.find((task) => task.id === overId);
 
-      console.log({
-        activeIndex,
-        overIndex,
-      });
+      if (!overTask) {
+        return prevTasks;
+      }
 
-      return prevTasks;
+      // Перемещение внутри одной колонки
+      if (activeTask.status === overTask.status) {
+        const columnTasks = prevTasks.filter(
+          (task) => task.status === activeTask.status,
+        );
+
+        const oldIndex = columnTasks.findIndex((task) => task.id === taskId);
+        const newIndex = columnTasks.findIndex((task) => task.id === overId);
+
+        const reorderedTasks = arrayMove(columnTasks, oldIndex, newIndex);
+
+        const otherTasks = prevTasks.filter(
+          (task) => task.status !== activeTask.status,
+        );
+
+        return [...otherTasks, ...reorderedTasks];
+      }
+
+      // Перемещение между колонками
+      const sourceTasks = prevTasks.filter(
+        (task) => task.status === activeTask.status && task.id !== taskId,
+      );
+
+      const targetTasks = prevTasks.filter(
+        (task) => task.status === overTask.status,
+      );
+
+      const overIndex = targetTasks.findIndex((task) => task.id === overId);
+
+      const movedTask = {
+        ...activeTask,
+        status: overTask.status,
+      };
+
+      targetTasks.splice(overIndex, 0, movedTask);
+
+      return [
+        ...prevTasks.filter(
+          (task) =>
+            task.status !== activeTask.status &&
+            task.status !== overTask.status,
+        ),
+        ...sourceTasks,
+        ...targetTasks,
+      ];
     });
   };
 
