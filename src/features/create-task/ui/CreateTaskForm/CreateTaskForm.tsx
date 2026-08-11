@@ -94,23 +94,34 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label
-            htmlFor="status"
-            className="text-sm font-medium text-slate-700"
-          >
-            Status
+          <label htmlFor="title" className="text-sm font-medium text-slate-700">
+            Title
           </label>
 
-          <select
-            id="status"
-            value={formData.status}
-            onChange={(e) => handleChange('status', e.target.value)}
-            className="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-          >
-            <option value="todo">Todo</option>
-            <option value="in-progress">In Progress</option>
-            <option value="done">Done</option>
-          </select>
+          <input
+            id="title"
+            type="text"
+            value={formData.title}
+            onChange={(e) => handleChange('title', e.target.value)}
+            placeholder="Enter task title..."
+            className={`rounded-lg border px-3 py-2 outline-none transition ${
+              formData.title.trim().length > 0 &&
+              formData.title.trim().length < 3
+                ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                : 'border-slate-300 focus:border-slate-500 focus:ring-2 focus:ring-slate-200'
+            }`}
+          />
+
+          {formData.title.trim().length > 0 &&
+            formData.title.trim().length < 3 && (
+              <p className="text-sm text-red-500">
+                Title must contain at least 3 characters.
+              </p>
+            )}
+
+          {formData.title.trim().length === 0 && (
+            <p className="text-sm text-slate-400">Minimum 3 characters.</p>
+          )}
         </div>
 
         <button
