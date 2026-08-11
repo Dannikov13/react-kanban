@@ -15,10 +15,17 @@ const priorityColors = {
 };
 
 const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: task.id,
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({
+    id: task.id,
+  });
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -54,7 +61,15 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
 
   if (isEditing) {
     return (
-      <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <article
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+        style={style}
+        className={`relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
+          isDragging ? 'scale-105 border-blue-400 opacity-70 shadow-2xl' : ''
+        }`}
+      >
         <form
           className="flex flex-col gap-3"
           onSubmit={(e) => {
@@ -103,6 +118,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
                 priority: e.target.value as Task['priority'],
               })
             }
+            disabled={isDragging}
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -120,6 +136,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
                 status: e.target.value as TaskStatus,
               })
             }
+            disabled={isDragging}
           >
             <option value="todo">Todo</option>
             <option value="in-progress">In Progress</option>
@@ -153,9 +170,15 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
       {...attributes}
       {...listeners}
       style={style}
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+      className={`relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
+        isDragging ? 'scale-105 border-blue-400 opacity-70 shadow-2xl' : ''
+      }`}
     >
-      <h3 className="text-lg font-semibold text-slate-900">{task.title}</h3>
+      {isOver && !isDragging && (
+        <div className="absolute -top-2 left-0 right-0 h-1 rounded-full bg-blue-500" />
+      )}
+
+      {task.title}
 
       {task.description && (
         <p className="mt-2 text-sm text-slate-600">{task.description}</p>
@@ -174,6 +197,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
       <button
         onClick={() => onDeleteTask(task.id)}
         className="mt-4 rounded-lg bg-red-500 px-3 py-1 text-sm text-white"
+        disabled={isDragging}
       >
         Delete
       </button>
@@ -181,6 +205,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
       <button
         onClick={() => setIsEditing(true)}
         className="mt-4 ml-2 rounded-lg bg-yellow-500 px-3 py-1 text-sm text-white"
+        disabled={isDragging}
       >
         Edit
       </button>

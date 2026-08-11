@@ -1,4 +1,3 @@
-import type { CreateTaskData, Task, TaskStatus } from '@/entities/task';
 import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
@@ -6,6 +5,14 @@ import { initialTasks } from '@/entities/task/model/initialTasks';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { useState } from 'react';
+import TaskFilter from '@/features/task-filter/ui/TaskFilter';
+import type {
+  CreateTaskData,
+  Task,
+  TaskPriority,
+  TaskStatus,
+} from '@/entities/task';
 
 type TasksByStatus = {
   todo: Task[];
@@ -15,6 +22,20 @@ type TasksByStatus = {
 
 const KanbanBoard = () => {
   const [tasks, setTasks] = useLocalStorage('tasks', initialTasks);
+  const [search, setSearch] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>(
+    'all',
+  );
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+  };
+
+  const hasActiveFilters =
+    search.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all';
 
   const handleCreateTask = (data: CreateTaskData) => {
     const newTask: Task = {
@@ -62,7 +83,6 @@ const KanbanBoard = () => {
 
       const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
 
-      // Если бросили непосредственно на колонку
       if (statuses.includes(overId as TaskStatus)) {
         const newStatus = overId as TaskStatus;
 
@@ -80,14 +100,12 @@ const KanbanBoard = () => {
         );
       }
 
-      // Если бросили на другую карточку
       const overTask = prevTasks.find((task) => task.id === overId);
 
       if (!overTask) {
         return prevTasks;
       }
 
-      // Перемещение внутри одной колонки
       if (activeTask.status === overTask.status) {
         const columnTasks = prevTasks.filter(
           (task) => task.status === activeTask.status,
@@ -105,7 +123,6 @@ const KanbanBoard = () => {
         return [...otherTasks, ...reorderedTasks];
       }
 
-      // Перемещение между колонками
       const sourceTasks = prevTasks.filter(
         (task) => task.status === activeTask.status && task.id !== taskId,
       );
@@ -139,11 +156,24 @@ const KanbanBoard = () => {
     if (!e.over) {
       return;
     }
-
     handleMoveTask(String(e.active.id), String(e.over.id));
   };
 
-  const tasksByStatus = tasks.reduce<TasksByStatus>(
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(search.toLowerCase()) ||
+      (task.description ?? '').toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' || task.status === statusFilter;
+
+    const matchesPriority =
+      priorityFilter === 'all' || task.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
+  const tasksByStatus = filteredTasks.reduce<TasksByStatus>(
     (acc, task) => {
       acc[task.status].push(task);
 
@@ -159,6 +189,30 @@ const KanbanBoard = () => {
   return (
     <>
       <CreateTaskForm onCreateTask={handleCreateTask} />
+      <TaskFilter
+        search={search}
+        status={statusFilter}
+        priority={priorityFilter}
+        onSearchChange={setSearch}
+        onStatusChange={setStatusFilter}
+        onPriorityChange={setPriorityFilter}
+      />
+      <div className="mb-6 flex items-center justify-between">
+        <p className="text-sm text-slate-500">
+          {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}{' '}
+          found
+        </p>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
       <DndContext onDragEnd={handleDragEnd}>
         <section className="grid gap-6 md:grid-cols-3">
           <TaskColumn
