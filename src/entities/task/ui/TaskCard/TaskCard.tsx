@@ -14,6 +14,36 @@ const priorityColors = {
   high: 'bg-red-100 text-red-700',
 };
 
+const formatDueDate = (timestamp?: number) => {
+  if (timestamp === undefined) {
+    return '';
+  }
+
+  const instant = Temporal.Instant.fromEpochMilliseconds(timestamp);
+
+  return instant
+    .toZonedDateTimeISO('Europe/Kyiv')
+    .toPlainDateTime()
+    .toLocaleString('en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
+};
+
+const formatDateTimeLocal = (timestamp?: number) => {
+  if (timestamp === undefined) {
+    return '';
+  }
+
+  const instant = Temporal.Instant.fromEpochMilliseconds(timestamp);
+
+  return instant
+    .toZonedDateTimeISO('Europe/Kyiv')
+    .toPlainDateTime()
+    .toString()
+    .slice(0, 16);
+};
+
 const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   const {
     attributes,
@@ -32,6 +62,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   const [formData, setFormData] = useState({
     title: task.title,
     description: task.description,
+    dueDate: task.dueDate,
     priority: task.priority,
     status: task.status,
   });
@@ -52,6 +83,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     setFormData({
       title: task.title,
       description: task.description,
+      dueDate: task.dueDate,
       priority: task.priority,
       status: task.status,
     });
@@ -63,13 +95,24 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     return (
       <article
         ref={setNodeRef}
-        {...attributes}
-        {...listeners}
         style={style}
-        className={`relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
-          isDragging ? 'scale-105 border-blue-400 opacity-70 shadow-2xl' : ''
+        className={`group relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
+          isDragging ? 'border-blue-400 opacity-60 shadow-lg' : ''
         }`}
       >
+        <div className="mb-3 flex items-center justify-end">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="cursor-grab  rounded px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
+            aria-label="Drag task"
+            disabled={isDragging}
+          >
+            ⋮⋮
+          </button>
+        </div>
+
         <form
           className="flex flex-col gap-3"
           onSubmit={(e) => {
@@ -103,6 +146,36 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
                 description: e.target.value,
               })
             }
+          />
+
+          <label className="text-sm font-medium text-slate-700">
+            Due date:
+          </label>
+
+          <input
+            type="datetime-local"
+            value={formatDateTimeLocal(formData.dueDate)}
+            onChange={(e) => {
+              if (!e.target.value) {
+                setFormData({
+                  ...formData,
+                  dueDate: undefined,
+                });
+
+                return;
+              }
+
+              const dateTime = Temporal.PlainDateTime.from(e.target.value);
+
+              const timestamp =
+                dateTime.toZonedDateTime('Europe/Kyiv').epochMilliseconds;
+
+              setFormData({
+                ...formData,
+                dueDate: timestamp,
+              });
+            }}
+            className="rounded-lg border border-slate-300 px-3 py-2"
           />
 
           <label className="text-sm font-medium text-slate-700">
@@ -167,21 +240,38 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   return (
     <article
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
       style={style}
       className={`relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
-        isDragging ? 'scale-105 border-blue-400 opacity-70 shadow-2xl' : ''
+        isDragging ? 'border-blue-400 opacity-60 shadow-lg' : ''
       }`}
     >
       {isOver && !isDragging && (
         <div className="absolute -top-2 left-0 right-0 h-1 rounded-full bg-blue-500" />
       )}
 
-      {task.title}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <h3 className="font-medium text-slate-900">{task.title}</h3>
+
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="shrink-0 cursor-grab touch-none rounded px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
+          aria-label="Drag task"
+          disabled={isDragging}
+        >
+          ⋮⋮
+        </button>
+      </div>
 
       {task.description && (
         <p className="mt-2 text-sm text-slate-600">{task.description}</p>
+      )}
+
+      {task.dueDate !== undefined && (
+        <p className="mt-3 text-sm text-slate-500">
+          Due: {formatDueDate(task.dueDate)}
+        </p>
       )}
 
       <div className="mt-4 flex items-center justify-between">
@@ -194,21 +284,23 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         <span className="text-xs text-slate-500">{task.status}</span>
       </div>
 
-      <button
-        onClick={() => onDeleteTask(task.id)}
-        className="mt-4 rounded-lg bg-red-500 px-3 py-1 text-sm text-white"
-        disabled={isDragging}
-      >
-        Delete
-      </button>
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => onDeleteTask(task.id)}
+          className="rounded-lg bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+        >
+          Delete
+        </button>
 
-      <button
-        onClick={() => setIsEditing(true)}
-        className="mt-4 ml-2 rounded-lg bg-yellow-500 px-3 py-1 text-sm text-white"
-        disabled={isDragging}
-      >
-        Edit
-      </button>
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="rounded-lg bg-yellow-500 px-3 py-1 text-sm text-white hover:bg-yellow-600"
+        >
+          Edit
+        </button>
+      </div>
     </article>
   );
 };

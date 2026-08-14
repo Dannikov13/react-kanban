@@ -5,6 +5,7 @@ export type TaskPriority = 'low' | 'medium' | 'high';
 export interface CreateTaskData {
   title: string;
   description?: string;
+  dueDate?: number;
   priority: TaskPriority;
   status: TaskStatus;
 }
