@@ -42,6 +42,7 @@ const KanbanBoard = () => {
       id: crypto.randomUUID(),
       title: data.title,
       description: data.description,
+      dueDate: data.dueDate,
       priority: data.priority,
       status: data.status,
       createdAt: Date.now(),
