@@ -4,7 +4,6 @@ import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { initialTasks } from '@/entities/task/model/initialTasks';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import { useState } from 'react';
 import TaskFilter from '@/features/task-filter/ui/TaskFilter';
 import type {
@@ -13,6 +12,12 @@ import type {
   TaskPriority,
   TaskStatus,
 } from '@/entities/task';
+import {
+  createTask,
+  deleteTask,
+  moveTask,
+  updateTask,
+} from '@/entities/task/lib/taskUtils';
 
 type TasksByStatus = {
   todo: Task[];
@@ -38,18 +43,14 @@ const KanbanBoard = () => {
     search.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all';
 
   const handleCreateTask = (data: CreateTaskData) => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: data.title,
-      description: data.description,
-      dueDate: data.dueDate,
-      priority: data.priority,
-      status: data.status,
+    const newTask = createTask({
+      ...data,
       createdAt: Date.now(),
-    };
+    });
 
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
+
   const handleDeleteTask = (taskId: Task['id']) => {
     const isConfirmed = window.confirm(
       'Are you sure you want to delete this task?',
@@ -58,105 +59,23 @@ const KanbanBoard = () => {
     if (!isConfirmed) {
       return;
     }
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+
+    setTasks((prevTasks) => deleteTask(prevTasks, taskId));
   };
 
   const handleUpdateTask = (taskId: Task['id'], updatedData: Partial<Task>) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              ...updatedData,
-            }
-          : task,
-      ),
-    );
+    setTasks((prevTasks) => updateTask(prevTasks, taskId, updatedData));
   };
 
   const handleMoveTask = (taskId: Task['id'], overId: string) => {
-    setTasks((prevTasks) => {
-      const activeTask = prevTasks.find((task) => task.id === taskId);
-
-      if (!activeTask) {
-        return prevTasks;
-      }
-
-      const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
-
-      if (statuses.includes(overId as TaskStatus)) {
-        const newStatus = overId as TaskStatus;
-
-        if (activeTask.status === newStatus) {
-          return prevTasks;
-        }
-
-        return prevTasks.map((task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                status: newStatus,
-              }
-            : task,
-        );
-      }
-
-      const overTask = prevTasks.find((task) => task.id === overId);
-
-      if (!overTask) {
-        return prevTasks;
-      }
-
-      if (activeTask.status === overTask.status) {
-        const columnTasks = prevTasks.filter(
-          (task) => task.status === activeTask.status,
-        );
-
-        const oldIndex = columnTasks.findIndex((task) => task.id === taskId);
-        const newIndex = columnTasks.findIndex((task) => task.id === overId);
-
-        const reorderedTasks = arrayMove(columnTasks, oldIndex, newIndex);
-
-        const otherTasks = prevTasks.filter(
-          (task) => task.status !== activeTask.status,
-        );
-
-        return [...otherTasks, ...reorderedTasks];
-      }
-
-      const sourceTasks = prevTasks.filter(
-        (task) => task.status === activeTask.status && task.id !== taskId,
-      );
-
-      const targetTasks = prevTasks.filter(
-        (task) => task.status === overTask.status,
-      );
-
-      const overIndex = targetTasks.findIndex((task) => task.id === overId);
-
-      const movedTask = {
-        ...activeTask,
-        status: overTask.status,
-      };
-
-      targetTasks.splice(overIndex, 0, movedTask);
-
-      return [
-        ...prevTasks.filter(
-          (task) =>
-            task.status !== activeTask.status &&
-            task.status !== overTask.status,
-        ),
-        ...sourceTasks,
-        ...targetTasks,
-      ];
-    });
+    setTasks((prevTasks) => moveTask(prevTasks, taskId, overId));
   };
 
   const handleDragEnd = (e: DragEndEvent) => {
     if (!e.over) {
       return;
     }
+
     handleMoveTask(String(e.active.id), String(e.over.id));
   };
 
@@ -190,6 +109,7 @@ const KanbanBoard = () => {
   return (
     <>
       <CreateTaskForm onCreateTask={handleCreateTask} />
+
       <TaskFilter
         search={search}
         status={statusFilter}
@@ -198,6 +118,7 @@ const KanbanBoard = () => {
         onStatusChange={setStatusFilter}
         onPriorityChange={setPriorityFilter}
       />
+
       <div className="mb-6 flex items-center justify-between">
         <p className="text-sm text-slate-500">
           {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}{' '}
@@ -214,6 +135,7 @@ const KanbanBoard = () => {
           </button>
         )}
       </div>
+
       <DndContext onDragEnd={handleDragEnd}>
         <section className="grid gap-6 md:grid-cols-3">
           <TaskColumn
@@ -223,6 +145,7 @@ const KanbanBoard = () => {
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleUpdateTask}
           />
+
           <TaskColumn
             title="In Progress"
             variant="in-progress"
