@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import type { Task, TaskStatus } from '@/entities/task';
 import { useSortable } from '@dnd-kit/sortable';
+import {
+  formatDateTimeLocal,
+  formatDueDate,
+  parseDateTimeLocal,
+} from '@/entities/task/lib/taskDateUtils';
 
 interface TaskCardProps {
   task: Task;
@@ -12,36 +17,6 @@ const priorityColors = {
   low: 'bg-green-100 text-green-700',
   medium: 'bg-yellow-100 text-yellow-700',
   high: 'bg-red-100 text-red-700',
-};
-
-const formatDueDate = (timestamp?: number) => {
-  if (timestamp === undefined) {
-    return '';
-  }
-
-  const instant = Temporal.Instant.fromEpochMilliseconds(timestamp);
-
-  return instant
-    .toZonedDateTimeISO('Europe/Kyiv')
-    .toPlainDateTime()
-    .toLocaleString('en-GB', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    });
-};
-
-const formatDateTimeLocal = (timestamp?: number) => {
-  if (timestamp === undefined) {
-    return '';
-  }
-
-  const instant = Temporal.Instant.fromEpochMilliseconds(timestamp);
-
-  return instant
-    .toZonedDateTimeISO('Europe/Kyiv')
-    .toPlainDateTime()
-    .toString()
-    .slice(0, 16);
 };
 
 const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
@@ -125,12 +100,12 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
           <input
             className="rounded-lg border border-slate-300 px-3 py-2"
             value={formData.title}
-            onChange={(e) =>
+            onChange={(e) => {
               setFormData({
                 ...formData,
-                title: e.target.value,
-              })
-            }
+                dueDate: parseDateTimeLocal(e.target.value),
+              });
+            }}
           />
 
           <label className="text-sm font-medium text-slate-700">
