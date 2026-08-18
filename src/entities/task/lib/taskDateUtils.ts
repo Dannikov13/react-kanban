@@ -21,13 +21,22 @@ export const formatDateTimeLocal = (timestamp?: number): string => {
     return '';
   }
 
-  const instant = Temporal.Instant.fromEpochMilliseconds(timestamp);
-
-  return instant
+  const plainDateTime = Temporal.Instant.fromEpochMilliseconds(timestamp)
     .toZonedDateTimeISO(TIME_ZONE)
-    .toPlainDateTime()
-    .toString()
-    .slice(0, 16);
+    .toPlainDateTime();
+
+  return (
+    [
+      plainDateTime.year.toString().padStart(4, '0'),
+      plainDateTime.month.toString().padStart(2, '0'),
+      plainDateTime.day.toString().padStart(2, '0'),
+    ].join('-') +
+    'T' +
+    [
+      plainDateTime.hour.toString().padStart(2, '0'),
+      plainDateTime.minute.toString().padStart(2, '0'),
+    ].join(':')
+  );
 };
 
 export const parseDateTimeLocal = (value: string): number | undefined => {
