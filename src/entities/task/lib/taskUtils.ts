@@ -1,4 +1,4 @@
-import type { Task, TaskStatus } from '@/entities/task';
+import type { Task, TaskStatus, TaskSort } from '@/entities/task';
 
 export const createTask = (data: Omit<Task, 'id'>): Task => {
   return {
@@ -24,6 +24,44 @@ export const updateTask = (
         }
       : task,
   );
+};
+
+export const sortTasks = (tasks: Task[], sort: TaskSort): Task[] => {
+  if (sort === 'manual') {
+    return tasks;
+  }
+
+  const sortedTasks = [...tasks];
+
+  if (sort === 'due-asc') {
+    return sortedTasks.sort((a, b) => {
+      if (a.dueDate === undefined) return 1;
+      if (b.dueDate === undefined) return -1;
+
+      return a.dueDate - b.dueDate;
+    });
+  }
+
+  if (sort === 'due-desc') {
+    return sortedTasks.sort((a, b) => {
+      if (a.dueDate === undefined) return 1;
+      if (b.dueDate === undefined) return -1;
+
+      return b.dueDate - a.dueDate;
+    });
+  }
+
+  const priorityOrder: Record<Task['priority'], number> = {
+    low: 1,
+    medium: 2,
+    high: 3,
+  };
+
+  return sortedTasks.sort((a, b) => {
+    const difference = priorityOrder[a.priority] - priorityOrder[b.priority];
+
+    return sort === 'priority-asc' ? difference : -difference;
+  });
 };
 
 export const moveTask = (

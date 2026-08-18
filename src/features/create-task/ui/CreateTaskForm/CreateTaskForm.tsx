@@ -1,5 +1,9 @@
 import { type FormEvent, useState } from 'react';
 import type { CreateTaskData } from '@/entities/task/model/types';
+import {
+  formatDateTimeLocal,
+  parseDateTimeLocal,
+} from '@/entities/task/lib/taskDateUtils';
 
 interface CreateTaskFormProps {
   onCreateTask: (data: CreateTaskData) => void;
@@ -11,18 +15,6 @@ const INITIAL_FORM_DATA: CreateTaskData = {
   dueDate: undefined,
   priority: 'medium',
   status: 'todo',
-};
-
-const formatDueDate = (timestamp?: number) => {
-  if (timestamp === undefined) {
-    return '';
-  }
-
-  const instant = Temporal.Instant.fromEpochMilliseconds(timestamp);
-
-  const dateTime = instant.toZonedDateTimeISO('Europe/Kyiv');
-
-  return dateTime.toPlainDateTime().toString().slice(0, 16);
 };
 
 const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
@@ -116,20 +108,12 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
           <input
             id="dueDate"
             type="datetime-local"
-            value={formatDueDate(formData.dueDate)}
+            value={formatDateTimeLocal(formData.dueDate)}
             onChange={(e) => {
-              const dateTime = Temporal.PlainDateTime.from(e.target.value);
-
-              const timestamp =
-                dateTime.toZonedDateTime('Europe/Kyiv').epochMilliseconds;
-
               setFormData((prev) => ({
                 ...prev,
-                dueDate: timestamp,
+                dueDate: parseDateTimeLocal(e.target.value),
               }));
-
-              console.log('Temporal:', dateTime);
-              console.log('Timestamp:', timestamp);
             }}
             className="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
           />
