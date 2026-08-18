@@ -1,21 +1,25 @@
-import type { TaskPriority, TaskStatus } from '@/entities/task';
+import type { TaskPriority, TaskSort, TaskStatus } from '@/entities/task';
 
 interface TaskFilterProps {
   search: string;
   status: TaskStatus | 'all';
   priority: TaskPriority | 'all';
+  sort: TaskSort;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: TaskStatus | 'all') => void;
   onPriorityChange: (value: TaskPriority | 'all') => void;
+  onSortChange: (value: TaskSort) => void;
 }
 
 const TaskFilter = ({
   search,
   status,
   priority,
+  sort,
   onSearchChange,
   onStatusChange,
   onPriorityChange,
+  onSortChange,
 }: TaskFilterProps) => {
   return (
     <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -87,6 +91,27 @@ const TaskFilter = ({
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
+          </select>
+        </div>
+        <div>
+          <label
+            htmlFor="sort-filter"
+            className="mb-2 block text-sm font-medium text-slate-700"
+          >
+            Sort by
+          </label>
+
+          <select
+            id="sort-filter"
+            value={sort}
+            onChange={(e) => onSortChange(e.target.value as TaskSort)}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="manual">Manual order</option>
+            <option value="due-asc">Due date ↑</option>
+            <option value="due-desc">Due date ↓</option>
+            <option value="priority-asc">Priority ↑</option>
+            <option value="priority-desc">Priority ↓</option>
           </select>
         </div>
       </div>
