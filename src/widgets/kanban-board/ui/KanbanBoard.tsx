@@ -10,12 +10,14 @@ import type {
   CreateTaskData,
   Task,
   TaskPriority,
+  TaskSort,
   TaskStatus,
 } from '@/entities/task';
 import {
   createTask,
   deleteTask,
   moveTask,
+  sortTasks,
   updateTask,
 } from '@/entities/task/lib/taskUtils';
 
@@ -32,11 +34,13 @@ const KanbanBoard = () => {
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>(
     'all',
   );
+  const [sort, setSort] = useState<TaskSort>('manual');
 
   const handleClearFilters = () => {
     setSearch('');
     setStatusFilter('all');
     setPriorityFilter('all');
+    setSort('manual');
   };
 
   const hasActiveFilters =
@@ -93,7 +97,9 @@ const KanbanBoard = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
-  const tasksByStatus = filteredTasks.reduce<TasksByStatus>(
+  const sortedTasks = sortTasks(filteredTasks, sort);
+
+  const tasksByStatus = sortedTasks.reduce<TasksByStatus>(
     (acc, task) => {
       acc[task.status].push(task);
 
@@ -114,9 +120,11 @@ const KanbanBoard = () => {
         search={search}
         status={statusFilter}
         priority={priorityFilter}
+        sort={sort}
         onSearchChange={setSearch}
         onStatusChange={setStatusFilter}
         onPriorityChange={setPriorityFilter}
+        onSortChange={setSort}
       />
 
       <div className="mb-6 flex items-center justify-between">
