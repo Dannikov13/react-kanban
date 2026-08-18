@@ -5,6 +5,7 @@ import {
   deleteTask,
   moveTask,
   updateTask,
+  sortTasks,
 } from '@/entities/task/lib/taskUtils.ts';
 
 const tasks: Task[] = [
@@ -169,5 +170,75 @@ describe('moveTask', () => {
     const result = moveTask(tasks, '999', 'done');
 
     expect(result).toEqual(tasks);
+  });
+});
+
+describe('sortTasks', () => {
+  const tasks: Task[] = [
+    {
+      id: '1',
+      title: 'Task 1',
+      priority: 'low',
+      status: 'todo',
+      dueDate: 1000,
+    },
+    {
+      id: '2',
+      title: 'Task 2',
+      priority: 'high',
+      status: 'todo',
+      dueDate: 3000,
+    },
+    {
+      id: '3',
+      title: 'Task 3',
+      priority: 'medium',
+      status: 'todo',
+      dueDate: 2000,
+    },
+    {
+      id: '4',
+      title: 'Task 4',
+      priority: 'high',
+      status: 'todo',
+    },
+  ];
+
+  it('keeps original order for manual sorting', () => {
+    const result = sortTasks(tasks, 'manual');
+
+    expect(result.map((task) => task.id)).toEqual(['1', '2', '3', '4']);
+  });
+
+  it('sorts tasks by due date ascending', () => {
+    const result = sortTasks(tasks, 'due-asc');
+
+    expect(result.map((task) => task.id)).toEqual(['1', '3', '2', '4']);
+  });
+
+  it('sorts tasks by due date descending', () => {
+    const result = sortTasks(tasks, 'due-desc');
+
+    expect(result.map((task) => task.id)).toEqual(['2', '3', '1', '4']);
+  });
+
+  it('sorts tasks by priority ascending', () => {
+    const result = sortTasks(tasks, 'priority-asc');
+
+    expect(result.map((task) => task.id)).toEqual(['1', '3', '2', '4']);
+  });
+
+  it('sorts tasks by priority descending', () => {
+    const result = sortTasks(tasks, 'priority-desc');
+
+    expect(result.map((task) => task.id)).toEqual(['2', '4', '3', '1']);
+  });
+
+  it('does not mutate the original array', () => {
+    const original = [...tasks];
+
+    sortTasks(tasks, 'due-asc');
+
+    expect(tasks).toEqual(original);
   });
 });
