@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import type { Task, TaskStatus } from '@/entities/task';
 import { useSortable } from '@dnd-kit/sortable';
+import { formatDueDate } from '@/entities/task/lib/taskDateUtils';
+import DateTimePicker from '@/shared/ui/DateTimePicker/DateTimePicker';
 import {
-  formatDateTimeLocal,
-  formatDueDate,
-  parseDateTimeLocal,
-} from '@/entities/task/lib/taskDateUtils';
+  type DueDateStatus,
+  getDueDateStatus,
+} from '@/entities/task/lib/dueDateUtils.ts';
 
 interface TaskCardProps {
   task: Task;
@@ -17,6 +18,22 @@ const priorityColors = {
   low: 'bg-green-100 text-green-700',
   medium: 'bg-yellow-100 text-yellow-700',
   high: 'bg-red-100 text-red-700',
+};
+
+const dueDateStyles: Record<DueDateStatus, string> = {
+  none: '',
+  overdue: 'text-red-600',
+  today: 'text-amber-600',
+  tomorrow: 'text-blue-600',
+  upcoming: 'text-slate-500',
+};
+
+const dueDateLabels: Record<DueDateStatus, string> = {
+  none: '',
+  overdue: 'Overdue',
+  today: 'Today',
+  tomorrow: 'Tomorrow',
+  upcoming: 'Due',
 };
 
 const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
@@ -31,6 +48,8 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   } = useSortable({
     id: task.id,
   });
+
+  const dueDateStatus = getDueDateStatus(task.dueDate);
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -80,7 +99,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             type="button"
             {...attributes}
             {...listeners}
-            className="cursor-grab  rounded px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
+            className="cursor-grab rounded px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
             aria-label="Drag task"
             disabled={isDragging}
           >
@@ -100,12 +119,12 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
           <input
             className="rounded-lg border border-slate-300 px-3 py-2"
             value={formData.title}
-            onChange={(e) => {
+            onChange={(e) =>
               setFormData({
                 ...formData,
-                dueDate: parseDateTimeLocal(e.target.value),
-              });
-            }}
+                title: e.target.value,
+              })
+            }
           />
 
           <label className="text-sm font-medium text-slate-700">
@@ -127,30 +146,14 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             Due date:
           </label>
 
-          <input
-            type="datetime-local"
-            value={formatDateTimeLocal(formData.dueDate)}
-            onChange={(e) => {
-              if (!e.target.value) {
-                setFormData({
-                  ...formData,
-                  dueDate: undefined,
-                });
-
-                return;
-              }
-
-              const dateTime = Temporal.PlainDateTime.from(e.target.value);
-
-              const timestamp =
-                dateTime.toZonedDateTime('Europe/Kyiv').epochMilliseconds;
-
+          <DateTimePicker
+            value={formData.dueDate}
+            onChange={(value) =>
               setFormData({
                 ...formData,
-                dueDate: timestamp,
-              });
-            }}
-            className="rounded-lg border border-slate-300 px-3 py-2"
+                dueDate: value,
+              })
+            }
           />
 
           <label className="text-sm font-medium text-slate-700">
@@ -243,18 +246,22 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         <p className="mt-2 text-sm text-slate-600">{task.description}</p>
       )}
 
-      {task.dueDate !== undefined && (
-        <p className="mt-3 text-sm text-slate-500">
-          Due: {formatDueDate(task.dueDate)}
-        </p>
-      )}
-
       <div className="mt-4 flex items-center justify-between">
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${priorityColors[task.priority]}`}
         >
           {task.priority}
         </span>
+
+        {task.dueDate !== undefined && (
+          <div className="mt-3">
+            <p
+              className={`text-sm font-medium ${dueDateStyles[dueDateStatus]}`}
+            >
+              {dueDateLabels[dueDateStatus]}: {formatDueDate(task.dueDate)}
+            </p>
+          </div>
+        )}
 
         <span className="text-xs text-slate-500">{task.status}</span>
       </div>

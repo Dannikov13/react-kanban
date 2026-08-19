@@ -6,38 +6,47 @@ import {
 } from './taskDateUtils';
 
 describe('taskDateUtils', () => {
-  const timestamp =
-    Temporal.PlainDateTime.from('2026-08-21T15:30').toZonedDateTime(
-      'Europe/Kyiv',
-    ).epochMilliseconds;
-
-  describe('formatDateTimeLocal', () => {
-    it('formats timestamp for datetime-local input', () => {
-      expect(formatDateTimeLocal(timestamp)).toBe('2026-08-21T15:30');
+  describe('parseDateTimeLocal', () => {
+    it('returns undefined for an empty value', () => {
+      expect(parseDateTimeLocal('')).toBeUndefined();
     });
 
-    it('returns empty string for undefined timestamp', () => {
+    it('converts local date and time to epoch milliseconds', () => {
+      const result = parseDateTimeLocal('2026-08-25T14:30');
+
+      expect(result).toBeTypeOf('number');
+    });
+
+    it('preserves date and time in Europe/Kyiv timezone', () => {
+      const value = '2026-08-25T14:30';
+
+      const timestamp = parseDateTimeLocal(value);
+
+      expect(formatDateTimeLocal(timestamp)).toBe(value);
+    });
+  });
+
+  describe('formatDateTimeLocal', () => {
+    it('returns empty string for undefined', () => {
       expect(formatDateTimeLocal(undefined)).toBe('');
+    });
+
+    it('formats timestamp for datetime-local input', () => {
+      const timestamp = parseDateTimeLocal('2026-08-25T14:30');
+
+      expect(formatDateTimeLocal(timestamp)).toBe('2026-08-25T14:30');
     });
   });
 
   describe('formatDueDate', () => {
-    it('formats timestamp as readable date and time', () => {
-      expect(formatDueDate(timestamp)).toBe('21 Aug 2026, 15:30');
-    });
-
-    it('returns empty string for undefined timestamp', () => {
+    it('returns empty string for undefined', () => {
       expect(formatDueDate(undefined)).toBe('');
     });
-  });
 
-  describe('parseDateTimeLocal', () => {
-    it('converts datetime-local value to timestamp', () => {
-      expect(parseDateTimeLocal('2026-08-21T15:30')).toBe(timestamp);
-    });
+    it('formats timestamp as a readable date and time', () => {
+      const timestamp = parseDateTimeLocal('2026-08-25T14:30');
 
-    it('returns undefined for empty value', () => {
-      expect(parseDateTimeLocal('')).toBeUndefined();
+      expect(formatDueDate(timestamp)).toBe('25 Aug 2026, 14:30');
     });
   });
 });

@@ -1,9 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import type { CreateTaskData } from '@/entities/task/model/types';
-import {
-  formatDateTimeLocal,
-  parseDateTimeLocal,
-} from '@/entities/task/lib/taskDateUtils';
+import DateTimePicker from '@/shared/ui/DateTimePicker/DateTimePicker';
 
 interface CreateTaskFormProps {
   onCreateTask: (data: CreateTaskData) => void;
@@ -98,24 +95,16 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label
-            htmlFor="dueDate"
-            className="text-sm font-medium text-slate-700"
-          >
-            Due date
-          </label>
+          <label className="text-sm font-medium text-slate-700">Due date</label>
 
-          <input
-            id="dueDate"
-            type="datetime-local"
-            value={formatDateTimeLocal(formData.dueDate)}
-            onChange={(e) => {
+          <DateTimePicker
+            value={formData.dueDate}
+            onChange={(value) => {
               setFormData((prev) => ({
                 ...prev,
-                dueDate: parseDateTimeLocal(e.target.value),
+                dueDate: value,
               }));
             }}
-            className="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
           />
         </div>
 
