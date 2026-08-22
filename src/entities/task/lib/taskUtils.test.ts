@@ -4,8 +4,8 @@ import {
   createTask,
   deleteTask,
   moveTask,
-  updateTask,
   sortTasks,
+  updateTask,
 } from '@/entities/task/lib/taskUtils.ts';
 
 const tasks: Task[] = [
@@ -220,6 +220,48 @@ describe('sortTasks', () => {
     const result = sortTasks(tasks, 'due-desc');
 
     expect(result.map((task) => task.id)).toEqual(['2', '3', '1', '4']);
+  });
+
+  it('keeps the original order of tasks without due dates', () => {
+    const tasksWithoutDueDates: Task[] = [
+      {
+        id: '1',
+        title: 'Task 1',
+        priority: 'low',
+        status: 'todo',
+      },
+      {
+        id: '2',
+        title: 'Task 2',
+        priority: 'high',
+        status: 'todo',
+      },
+    ];
+
+    const result = sortTasks(tasksWithoutDueDates, 'due-asc');
+
+    expect(result.map((task) => task.id)).toEqual(['1', '2']);
+  });
+
+  it('keeps the original order of tasks without due dates when sorting descending', () => {
+    const tasksWithoutDueDates: Task[] = [
+      {
+        id: '1',
+        title: 'Task 1',
+        priority: 'low',
+        status: 'todo',
+      },
+      {
+        id: '2',
+        title: 'Task 2',
+        priority: 'high',
+        status: 'todo',
+      },
+    ];
+
+    const result = sortTasks(tasksWithoutDueDates, 'due-desc');
+
+    expect(result.map((task) => task.id)).toEqual(['1', '2']);
   });
 
   it('sorts tasks by priority ascending', () => {

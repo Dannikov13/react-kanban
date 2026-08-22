@@ -3,8 +3,11 @@ import tseslint from 'typescript-eslint';
 import react from 'eslint-plugin-react';
 import prettier from 'eslint-config-prettier';
 import globals from 'globals';
+import { globalIgnores } from 'eslint/config';
 
 export default [
+  globalIgnores(['dist', 'coverage']),
+
   js.configs.recommended,
 
   ...tseslint.configs.recommended,
