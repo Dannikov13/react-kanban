@@ -1,4 +1,4 @@
-import type { Task, TaskStatus, TaskSort } from '@/entities/task';
+import type { Task, TaskSort, TaskStatus } from '@/entities/task';
 
 export const createTask = (data: Omit<Task, 'id'>): Task => {
   return {
@@ -35,8 +35,17 @@ export const sortTasks = (tasks: Task[], sort: TaskSort): Task[] => {
 
   if (sort === 'due-asc') {
     return sortedTasks.sort((a, b) => {
-      if (a.dueDate === undefined) return 1;
-      if (b.dueDate === undefined) return -1;
+      if (a.dueDate === undefined && b.dueDate === undefined) {
+        return 0;
+      }
+
+      if (a.dueDate === undefined) {
+        return 1;
+      }
+
+      if (b.dueDate === undefined) {
+        return -1;
+      }
 
       return a.dueDate - b.dueDate;
     });
@@ -44,8 +53,17 @@ export const sortTasks = (tasks: Task[], sort: TaskSort): Task[] => {
 
   if (sort === 'due-desc') {
     return sortedTasks.sort((a, b) => {
-      if (a.dueDate === undefined) return 1;
-      if (b.dueDate === undefined) return -1;
+      if (a.dueDate === undefined && b.dueDate === undefined) {
+        return 0;
+      }
+
+      if (a.dueDate === undefined) {
+        return 1;
+      }
+
+      if (b.dueDate === undefined) {
+        return -1;
+      }
 
       return b.dueDate - a.dueDate;
     });

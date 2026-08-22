@@ -61,6 +61,8 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     status: task.status,
   });
 
+  const isTitleInvalid = formData.title.trim().length < 3;
+
   const style = {
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -69,7 +71,15 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   };
 
   const handleSave = () => {
-    onUpdateTask(task.id, formData);
+    if (isTitleInvalid) {
+      return;
+    }
+
+    onUpdateTask(task.id, {
+      ...formData,
+      title: formData.title.trim(),
+    });
+
     setIsEditing(false);
   };
 
@@ -117,7 +127,11 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
           <label className="text-sm font-medium text-slate-700">Title:</label>
 
           <input
-            className="rounded-lg border border-slate-300 px-3 py-2"
+            className={`rounded-lg border px-3 py-2 ${
+              isTitleInvalid
+                ? 'border-red-400 focus:border-red-500'
+                : 'border-slate-300'
+            }`}
             value={formData.title}
             onChange={(e) =>
               setFormData({
@@ -126,6 +140,12 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
               })
             }
           />
+
+          {isTitleInvalid && (
+            <p className="text-sm text-red-500">
+              Title must contain at least 3 characters.
+            </p>
+          )}
 
           <label className="text-sm font-medium text-slate-700">
             Description:
@@ -197,7 +217,8 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white"
+              disabled={isTitleInvalid}
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white disabled:cursor-not-allowed disabled:bg-slate-400"
             >
               Save
             </button>
