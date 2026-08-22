@@ -83,7 +83,18 @@ const KanbanBoard = () => {
       return;
     }
 
-    handleMoveTask(String(e.active.id), String(e.over.id));
+    const activeId = String(e.active.id);
+    const overId = String(e.over.id);
+
+    const columnStatuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
+
+    const isDroppedOnColumn = columnStatuses.includes(overId as TaskStatus);
+
+    if (sort !== 'manual' && !isDroppedOnColumn) {
+      return;
+    }
+
+    handleMoveTask(activeId, overId);
   };
 
   const filteredTasks = tasks.filter((task) => {
