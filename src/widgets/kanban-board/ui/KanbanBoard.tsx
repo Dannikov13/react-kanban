@@ -44,7 +44,10 @@ const KanbanBoard = () => {
   };
 
   const hasActiveFilters =
-    search.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all';
+    search.trim() !== '' ||
+    statusFilter !== 'all' ||
+    priorityFilter !== 'all' ||
+    sort !== 'manual';
 
   const handleCreateTask = (data: CreateTaskData) => {
     const newTask = createTask({
