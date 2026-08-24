@@ -1,4 +1,5 @@
-import type { Task, TaskSort, TaskStatus } from '@/entities/task';
+import type { Task, TaskFilters, TaskSort, TaskStatus } from '@/entities/task';
+import { getDueDateStatus } from '@/entities/task/lib/dueDateUtils';
 
 export const createTask = (data: Omit<Task, 'id'>): Task => {
   return {
@@ -24,6 +25,29 @@ export const updateTask = (
         }
       : task,
   );
+};
+
+export const filterTasks = (tasks: Task[], filters: TaskFilters): Task[] => {
+  const search = filters.search.trim().toLowerCase();
+
+  return tasks.filter((task) => {
+    const matchesSearch =
+      search === '' ||
+      task.title.toLowerCase().includes(search) ||
+      (task.description ?? '').toLowerCase().includes(search);
+
+    const matchesStatus =
+      filters.status === 'all' || task.status === filters.status;
+
+    const matchesPriority =
+      filters.priority === 'all' || task.priority === filters.priority;
+
+    const matchesDueDate =
+      filters.dueDate === 'all' ||
+      getDueDateStatus(task.dueDate) === filters.dueDate;
+
+    return matchesSearch && matchesStatus && matchesPriority && matchesDueDate;
+  });
 };
 
 export const sortTasks = (tasks: Task[], sort: TaskSort): Task[] => {

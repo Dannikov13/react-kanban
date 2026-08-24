@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { Task } from '@/entities/task';
+import type { DueDateFilter, Task } from '@/entities/task';
 import {
   createTask,
   deleteTask,
+  filterTasks,
   moveTask,
   sortTasks,
   updateTask,
@@ -170,6 +171,220 @@ describe('moveTask', () => {
     const result = moveTask(tasks, '999', 'done');
 
     expect(result).toEqual(tasks);
+  });
+});
+
+describe('filterTasks', () => {
+  const today = Temporal.Now.plainDateISO('Europe/Kyiv');
+
+  const yesterday = today.subtract({ days: 1 });
+  const tomorrow = today.add({ days: 1 });
+  const upcoming = today.add({ days: 5 });
+
+  const toTimestamp = (date: Temporal.PlainDate) =>
+    Temporal.ZonedDateTime.from({
+      timeZone: 'Europe/Kyiv',
+      year: date.year,
+      month: date.month,
+      day: date.day,
+      hour: 12,
+      minute: 0,
+    }).epochMilliseconds;
+
+  const tasksForFiltering: Task[] = [
+    {
+      id: '1',
+      title: 'Learn React',
+      description: 'Study React hooks',
+      priority: 'high',
+      status: 'todo',
+      dueDate: toTimestamp(today),
+    },
+    {
+      id: '2',
+      title: 'Build Kanban',
+      description: 'Implement drag and drop',
+      priority: 'medium',
+      status: 'in-progress',
+      dueDate: toTimestamp(tomorrow),
+    },
+    {
+      id: '3',
+      title: 'Write tests',
+      description: 'Add Vitest tests',
+      priority: 'low',
+      status: 'done',
+    },
+    {
+      id: '4',
+      title: 'Fix old bug',
+      description: 'Fix an old issue',
+      priority: 'high',
+      status: 'todo',
+      dueDate: toTimestamp(yesterday),
+    },
+    {
+      id: '5',
+      title: 'Future task',
+      description: 'Something for later',
+      priority: 'medium',
+      status: 'todo',
+      dueDate: toTimestamp(upcoming),
+    },
+  ];
+
+  const createFilters = (
+    overrides: Partial<{
+      search: string;
+      status: Task['status'] | 'all';
+      priority: Task['priority'] | 'all';
+      dueDate: DueDateFilter;
+    }> = {},
+  ) => ({
+    search: '',
+    status: 'all' as const,
+    priority: 'all' as const,
+    dueDate: 'all' as const,
+    ...overrides,
+  });
+
+  it('returns all tasks when no filters are active', () => {
+    const result = filterTasks(tasksForFiltering, createFilters());
+
+    expect(result.map((task) => task.id)).toEqual(['1', '2', '3', '4', '5']);
+  });
+
+  it('filters tasks by title', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        search: 'kanban',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['2']);
+  });
+
+  it('filters tasks by description', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        search: 'hooks',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['1']);
+  });
+
+  it('search is case-insensitive', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        search: 'REACT',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['1']);
+  });
+
+  it('filters tasks by status', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        status: 'done',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['3']);
+  });
+
+  it('filters tasks by priority', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        priority: 'high',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['1', '4']);
+  });
+
+  it('filters tasks without a due date', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        dueDate: 'none',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['3']);
+  });
+
+  it('filters tasks due today', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        dueDate: 'today',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['1']);
+  });
+
+  it('filters tasks due tomorrow', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        dueDate: 'tomorrow',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['2']);
+  });
+
+  it('filters overdue tasks', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        dueDate: 'overdue',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['4']);
+  });
+
+  it('filters upcoming tasks', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        dueDate: 'upcoming',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['5']);
+  });
+
+  it('filters tasks using multiple filters', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        status: 'todo',
+        priority: 'high',
+      }),
+    );
+
+    expect(result.map((task) => task.id)).toEqual(['1', '4']);
+  });
+
+  it('returns an empty array when no tasks match', () => {
+    const result = filterTasks(
+      tasksForFiltering,
+      createFilters({
+        search: 'something that does not exist',
+      }),
+    );
+
+    expect(result).toEqual([]);
   });
 });
 
