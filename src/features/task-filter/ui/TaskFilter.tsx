@@ -1,14 +1,21 @@
-import type { TaskPriority, TaskSort, TaskStatus } from '@/entities/task';
+import type {
+  DueDateFilter,
+  TaskPriority,
+  TaskSort,
+  TaskStatus,
+} from '@/entities/task';
 
 interface TaskFilterProps {
   search: string;
   status: TaskStatus | 'all';
   priority: TaskPriority | 'all';
   sort: TaskSort;
+  dueDate: DueDateFilter;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: TaskStatus | 'all') => void;
   onPriorityChange: (value: TaskPriority | 'all') => void;
   onSortChange: (value: TaskSort) => void;
+  onDueDateChange: (value: DueDateFilter) => void;
 }
 
 const TaskFilter = ({
@@ -16,15 +23,17 @@ const TaskFilter = ({
   status,
   priority,
   sort,
+  dueDate,
   onSearchChange,
   onStatusChange,
   onPriorityChange,
   onSortChange,
+  onDueDateChange,
 }: TaskFilterProps) => {
   return (
     <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="md:col-span-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="md:col-span-4">
           <label
             htmlFor="task-search"
             className="mb-2 block text-sm font-medium text-slate-700"
@@ -93,6 +102,30 @@ const TaskFilter = ({
             <option value="high">High</option>
           </select>
         </div>
+
+        <div>
+          <label
+            htmlFor="due-date-filter"
+            className="mb-2 block text-sm font-medium text-slate-700"
+          >
+            Due date
+          </label>
+
+          <select
+            id="due-date-filter"
+            value={dueDate}
+            onChange={(e) => onDueDateChange(e.target.value as DueDateFilter)}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="all">All due dates</option>
+            <option value="none">No due date</option>
+            <option value="overdue">Overdue</option>
+            <option value="today">Today</option>
+            <option value="tomorrow">Tomorrow</option>
+            <option value="upcoming">Upcoming</option>
+          </select>
+        </div>
+
         <div>
           <label
             htmlFor="sort-filter"

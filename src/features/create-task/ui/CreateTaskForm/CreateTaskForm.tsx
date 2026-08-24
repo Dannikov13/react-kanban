@@ -17,7 +17,7 @@ const INITIAL_FORM_DATA: CreateTaskData = {
 const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   const [formData, setFormData] = useState<CreateTaskData>(INITIAL_FORM_DATA);
 
-  const isTitleEmpty = !(formData.title.trim().length >= 3);
+  const isTitleEmpty = formData.title.trim().length === 0;
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -26,7 +26,11 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
       return;
     }
 
-    onCreateTask(formData);
+    onCreateTask({
+      ...formData,
+      title: formData.title.trim(),
+    });
+
     setFormData(INITIAL_FORM_DATA);
   };
 
@@ -58,24 +62,8 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
             value={formData.title}
             onChange={(e) => handleChange('title', e.target.value)}
             placeholder="Enter task title..."
-            className={`rounded-lg border px-3 py-2 outline-none transition ${
-              formData.title.trim().length > 0 &&
-              formData.title.trim().length < 3
-                ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100'
-                : 'border-slate-300 focus:border-slate-500 focus:ring-2 focus:ring-slate-200'
-            }`}
+            className="rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
           />
-
-          {formData.title.trim().length > 0 &&
-            formData.title.trim().length < 3 && (
-              <p className="text-sm text-red-500">
-                Title must contain at least 3 characters.
-              </p>
-            )}
-
-          {formData.title.trim().length === 0 && (
-            <p className="text-sm text-slate-400">Minimum 3 characters.</p>
-          )}
         </div>
 
         <div className="flex flex-col gap-2">

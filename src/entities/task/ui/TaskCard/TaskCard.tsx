@@ -6,7 +6,7 @@ import DateTimePicker from '@/shared/ui/DateTimePicker/DateTimePicker';
 import {
   type DueDateStatus,
   getDueDateStatus,
-} from '@/entities/task/lib/dueDateUtils.ts';
+} from '@/entities/task/lib/dueDateUtils';
 
 interface TaskCardProps {
   task: Task;
@@ -49,8 +49,6 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     id: task.id,
   });
 
-  const dueDateStatus = getDueDateStatus(task.dueDate);
-
   const [isEditing, setIsEditing] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -61,7 +59,9 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     status: task.status,
   });
 
-  const isTitleInvalid = formData.title.trim().length < 3;
+  const isTitleEmpty = formData.title.trim().length === 0;
+
+  const dueDateStatus = getDueDateStatus(task.dueDate);
 
   const style = {
     transform: transform
@@ -71,7 +71,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   };
 
   const handleSave = () => {
-    if (isTitleInvalid) {
+    if (isTitleEmpty) {
       return;
     }
 
@@ -124,13 +124,13 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             handleSave();
           }}
         >
-          <label className="text-sm font-medium text-slate-700">Title:</label>
+          <label className="text-sm font-medium text-slate-700">Title</label>
 
           <input
-            className={`rounded-lg border px-3 py-2 ${
-              isTitleInvalid
-                ? 'border-red-400 focus:border-red-500'
-                : 'border-slate-300'
+            className={`rounded-lg border px-3 py-2 outline-none ${
+              isTitleEmpty
+                ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                : 'border-slate-300 focus:border-slate-500 focus:ring-2 focus:ring-slate-200'
             }`}
             value={formData.title}
             onChange={(e) =>
@@ -141,18 +141,16 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             }
           />
 
-          {isTitleInvalid && (
-            <p className="text-sm text-red-500">
-              Title must contain at least 3 characters.
-            </p>
+          {isTitleEmpty && (
+            <p className="text-sm text-red-500">Title is required.</p>
           )}
 
           <label className="text-sm font-medium text-slate-700">
-            Description:
+            Description
           </label>
 
           <textarea
-            className="rounded-lg border border-slate-300 px-3 py-2"
+            className="rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
             value={formData.description}
             onChange={(e) =>
               setFormData({
@@ -162,9 +160,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             }
           />
 
-          <label className="text-sm font-medium text-slate-700">
-            Due date:
-          </label>
+          <label className="text-sm font-medium text-slate-700">Due date</label>
 
           <DateTimePicker
             value={formData.dueDate}
@@ -176,9 +172,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             }
           />
 
-          <label className="text-sm font-medium text-slate-700">
-            Priority:
-          </label>
+          <label className="text-sm font-medium text-slate-700">Priority</label>
 
           <select
             className="rounded-lg border border-slate-300 px-3 py-2"
@@ -196,7 +190,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             <option value="high">High</option>
           </select>
 
-          <label className="text-sm font-medium text-slate-700">Status:</label>
+          <label className="text-sm font-medium text-slate-700">Status</label>
 
           <select
             className="rounded-lg border border-slate-300 px-3 py-2"
@@ -217,8 +211,8 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={isTitleInvalid}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white disabled:cursor-not-allowed disabled:bg-slate-400"
+              disabled={isTitleEmpty}
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-400"
             >
               Save
             </button>
@@ -226,7 +220,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             <button
               type="button"
               onClick={handleCancel}
-              className="rounded-lg border px-4 py-2"
+              className="rounded-lg border border-slate-300 px-4 py-2 transition hover:bg-slate-100"
             >
               Cancel
             </button>
@@ -267,7 +261,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         <p className="mt-2 text-sm text-slate-600">{task.description}</p>
       )}
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between gap-3">
         <span
           className={`rounded-full px-3 py-1 text-xs font-medium ${priorityColors[task.priority]}`}
         >
@@ -275,7 +269,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         </span>
 
         {task.dueDate !== undefined && (
-          <div className="mt-3">
+          <div>
             <p
               className={`text-sm font-medium ${dueDateStyles[dueDateStatus]}`}
             >
@@ -291,7 +285,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         <button
           type="button"
           onClick={() => onDeleteTask(task.id)}
-          className="rounded-lg bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+          className="rounded-lg bg-red-500 px-3 py-1 text-sm text-white transition hover:bg-red-600"
         >
           Delete
         </button>
@@ -299,7 +293,7 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="rounded-lg bg-yellow-500 px-3 py-1 text-sm text-white hover:bg-yellow-600"
+          className="rounded-lg bg-yellow-500 px-3 py-1 text-sm text-white transition hover:bg-yellow-600"
         >
           Edit
         </button>

@@ -1,5 +1,6 @@
 import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
+import ConfirmDialog from '@/shared/ui/ConfirmDialog/ConfirmDialog';
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { initialTasks } from '@/entities/task/model/initialTasks';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -8,7 +9,9 @@ import { useState } from 'react';
 import TaskFilter from '@/features/task-filter/ui/TaskFilter';
 import type {
   CreateTaskData,
+  DueDateFilter,
   Task,
+  TaskFilters,
   TaskPriority,
   TaskSort,
   TaskStatus,
@@ -16,6 +19,7 @@ import type {
 import {
   createTask,
   deleteTask,
+  filterTasks,
   moveTask,
   sortTasks,
   updateTask,
@@ -29,25 +33,30 @@ type TasksByStatus = {
 
 const KanbanBoard = () => {
   const [tasks, setTasks] = useLocalStorage('tasks', initialTasks);
-  const [search, setSearch] = useState<string>('');
+
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>(
     'all',
   );
   const [sort, setSort] = useState<TaskSort>('manual');
+  const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>('all');
+  const [taskIdToDelete, setTaskIdToDelete] = useState<Task['id'] | null>(null);
 
   const handleClearFilters = () => {
     setSearch('');
     setStatusFilter('all');
     setPriorityFilter('all');
     setSort('manual');
+    setDueDateFilter('all');
   };
 
   const hasActiveFilters =
     search.trim() !== '' ||
     statusFilter !== 'all' ||
     priorityFilter !== 'all' ||
-    sort !== 'manual';
+    sort !== 'manual' ||
+    dueDateFilter !== 'all';
 
   const handleCreateTask = (data: CreateTaskData) => {
     const newTask = createTask({
@@ -59,15 +68,20 @@ const KanbanBoard = () => {
   };
 
   const handleDeleteTask = (taskId: Task['id']) => {
-    const isConfirmed = window.confirm(
-      'Are you sure you want to delete this task?',
-    );
+    setTaskIdToDelete(taskId);
+  };
 
-    if (!isConfirmed) {
+  const handleConfirmDelete = () => {
+    if (!taskIdToDelete) {
       return;
     }
 
-    setTasks((prevTasks) => deleteTask(prevTasks, taskId));
+    setTasks((prevTasks) => deleteTask(prevTasks, taskIdToDelete));
+    setTaskIdToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setTaskIdToDelete(null);
   };
 
   const handleUpdateTask = (taskId: Task['id'], updatedData: Partial<Task>) => {
@@ -97,20 +111,14 @@ const KanbanBoard = () => {
     handleMoveTask(activeId, overId);
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch =
-      task.title.toLowerCase().includes(search.toLowerCase()) ||
-      (task.description ?? '').toLowerCase().includes(search.toLowerCase());
+  const filters: TaskFilters = {
+    search,
+    status: statusFilter,
+    priority: priorityFilter,
+    dueDate: dueDateFilter,
+  };
 
-    const matchesStatus =
-      statusFilter === 'all' || task.status === statusFilter;
-
-    const matchesPriority =
-      priorityFilter === 'all' || task.priority === priorityFilter;
-
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
-
+  const filteredTasks = filterTasks(tasks, filters);
   const sortedTasks = sortTasks(filteredTasks, sort);
 
   const tasksByStatus = sortedTasks.reduce<TasksByStatus>(
@@ -135,10 +143,12 @@ const KanbanBoard = () => {
         status={statusFilter}
         priority={priorityFilter}
         sort={sort}
+        dueDate={dueDateFilter}
         onSearchChange={setSearch}
         onStatusChange={setStatusFilter}
         onPriorityChange={setPriorityFilter}
         onSortChange={setSort}
+        onDueDateChange={setDueDateFilter}
       />
 
       <div className="mb-6 flex items-center justify-between">
@@ -164,6 +174,7 @@ const KanbanBoard = () => {
             title="Todo"
             variant="todo"
             tasks={tasksByStatus.todo}
+            isFiltered={hasActiveFilters}
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleUpdateTask}
           />
@@ -172,6 +183,7 @@ const KanbanBoard = () => {
             title="In Progress"
             variant="in-progress"
             tasks={tasksByStatus['in-progress']}
+            isFiltered={hasActiveFilters}
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleUpdateTask}
           />
@@ -180,11 +192,20 @@ const KanbanBoard = () => {
             title="Done"
             variant="done"
             tasks={tasksByStatus.done}
+            isFiltered={hasActiveFilters}
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleUpdateTask}
           />
         </section>
       </DndContext>
+      <ConfirmDialog
+        isOpen={taskIdToDelete !== null}
+        title="Delete task?"
+        description="This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </>
   );
 };

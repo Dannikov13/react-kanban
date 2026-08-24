@@ -1,9 +1,11 @@
 export type {
+  CreateTaskData,
+  DueDateFilter,
   Task,
-  TaskStatus,
+  TaskFilters,
   TaskPriority,
   TaskSort,
-  CreateTaskData,
+  TaskStatus,
 } from './model/types';
 
 export { initialTasks } from './model/initialTasks';

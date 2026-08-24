@@ -1,6 +1,5 @@
 import TaskCard from '@/entities/task/ui/TaskCard/TaskCard';
-import type { Task } from '@/entities/task';
-import type { TaskStatus } from '@/entities/task';
+import type { Task, TaskStatus } from '@/entities/task';
 import { columnStyles } from '@/widgets/kanban-board/model/columnStyles';
 import { useDroppable } from '@dnd-kit/core';
 import {
@@ -12,6 +11,7 @@ interface TaskColumnProps {
   title: string;
   tasks: Task[];
   variant: TaskStatus;
+  isFiltered: boolean;
   onDeleteTask: (taskId: Task['id']) => void;
   onUpdateTask: (taskId: Task['id'], updatedData: Partial<Task>) => void;
 }
@@ -20,6 +20,7 @@ const TaskColumn = ({
   title,
   tasks,
   variant,
+  isFiltered,
   onDeleteTask,
   onUpdateTask,
 }: TaskColumnProps) => {
@@ -46,13 +47,17 @@ const TaskColumn = ({
       >
         <div className="space-y-4">
           {tasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2">
-              <p className="text-lg">📭</p>
-              <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-slate-500">
-                📭 No tasks yet
+            <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 p-6 text-center">
+              <p className="text-2xl">{isFiltered ? '🔎' : '📭'}</p>
+
+              <p className="font-medium text-slate-600">
+                {isFiltered ? 'No matching tasks' : 'No tasks yet'}
               </p>
-              <p className="mt-1 text-sm text-slate-400">
-                Create your first task.
+
+              <p className="text-sm text-slate-400">
+                {isFiltered
+                  ? 'Try changing your filters.'
+                  : 'Create your first task.'}
               </p>
             </div>
           ) : (
