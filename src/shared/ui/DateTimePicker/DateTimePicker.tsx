@@ -164,34 +164,79 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-left text-slate-700 outline-none transition hover:border-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+        className="
+          flex w-full items-center justify-between
+          rounded-xl border
+          border-slate-300 bg-white
+          px-4 py-3
+          text-left text-sm text-slate-700
+          outline-none
+          transition
+          hover:border-slate-400
+          focus:border-blue-500
+          focus:ring-2 focus:ring-blue-100
+          dark:border-slate-600
+          dark:bg-slate-900
+          dark:text-slate-200
+          dark:hover:border-slate-500
+          dark:focus:border-blue-400
+          dark:focus:ring-blue-900/40
+        "
       >
         <span>{inputValue || 'Select date & time'}</span>
 
-        <span className="text-slate-400">▾</span>
+        <span className="text-slate-400 dark:text-slate-500">▾</span>
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-10 mt-2 w-full min-w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+        <div
+          className="
+            absolute left-0 top-full z-10 mt-2
+            w-full min-w-80
+            rounded-2xl border
+            border-slate-200 bg-white
+            p-4 shadow-xl
+            dark:border-slate-700
+            dark:bg-slate-800
+          "
+        >
+          {/* Calendar header */}
           <div className="mb-4 flex items-center justify-between">
             <button
               type="button"
               onClick={handlePreviousMonth}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              className="
+                flex h-9 w-9 items-center justify-center
+                rounded-lg
+                text-lg text-slate-500
+                transition
+                hover:bg-slate-100 hover:text-slate-900
+                focus:outline-none focus:ring-2 focus:ring-slate-200
+                dark:text-slate-400
+                dark:hover:bg-slate-700 dark:hover:text-white
+                dark:focus:ring-slate-600
+              "
               aria-label="Previous month"
             >
               ←
             </button>
 
             <div className="flex flex-col items-center">
-              <h3 className="text-sm font-semibold text-slate-900">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 {monthLabel}
               </h3>
 
               <button
                 type="button"
                 onClick={handleToday}
-                className="mt-1 text-xs font-medium text-slate-500 transition hover:text-slate-900"
+                className="
+                  mt-1 text-xs font-medium
+                  text-slate-500
+                  transition
+                  hover:text-slate-900
+                  dark:text-slate-400
+                  dark:hover:text-white
+                "
               >
                 Today
               </button>
@@ -200,14 +245,32 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
             <button
               type="button"
               onClick={handleNextMonth}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              className="
+                flex h-9 w-9 items-center justify-center
+                rounded-lg
+                text-lg text-slate-500
+                transition
+                hover:bg-slate-100 hover:text-slate-900
+                focus:outline-none focus:ring-2 focus:ring-slate-200
+                dark:text-slate-400
+                dark:hover:bg-slate-700 dark:hover:text-white
+                dark:focus:ring-slate-600
+              "
               aria-label="Next month"
             >
               →
             </button>
           </div>
 
-          <div className="mb-2 grid grid-cols-7 text-center text-xs font-medium text-slate-400">
+          {/* Weekdays */}
+          <div
+            className="
+              mb-2 grid grid-cols-7
+              text-center text-xs font-medium
+              text-slate-400
+              dark:text-slate-500
+            "
+          >
             <span>Mon</span>
             <span>Tue</span>
             <span>Wed</span>
@@ -217,6 +280,7 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
             <span>Sun</span>
           </div>
 
+          {/* Days */}
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: firstDayOfWeek - 1 }).map((_, index) => (
               <div key={`empty-${index}`} />
@@ -227,27 +291,54 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
                 key={day}
                 type="button"
                 onClick={() => handleSelectDay(day)}
-                className={`flex h-9 items-center justify-center rounded-lg text-sm transition focus:outline-none focus:ring-2 focus:ring-slate-200 ${
-                  isSelectedDay(day)
-                    ? 'bg-slate-900 font-semibold text-white'
-                    : isToday(day)
-                      ? 'bg-slate-100 font-semibold text-slate-900 hover:bg-slate-200'
-                      : 'text-slate-700 hover:bg-slate-100'
-                }`}
+                className={`
+                  flex h-9 items-center justify-center
+                  rounded-lg text-sm
+                  transition
+                  focus:outline-none focus:ring-2
+                  focus:ring-slate-200
+                  dark:focus:ring-slate-600
+                  ${
+                    isSelectedDay(day)
+                      ? 'bg-slate-900 font-semibold text-white dark:bg-white dark:text-slate-900'
+                      : isToday(day)
+                        ? 'bg-slate-100 font-semibold text-slate-900 hover:bg-slate-200 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600'
+                        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+                  }
+                `}
               >
                 {day}
               </button>
             ))}
           </div>
 
-          <div className="mt-4 border-t border-slate-100 pt-4">
-            <p className="mb-2 text-sm font-medium text-slate-700">Time</p>
+          {/* Time */}
+          <div className="mt-4 border-t border-slate-100 pt-4 dark:border-slate-700">
+            <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              Time
+            </p>
 
             <div className="flex items-center gap-2">
               <select
                 value={selectedHour}
                 onChange={(e) => handleHourChange(Number(e.target.value))}
-                className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition hover:border-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                className="
+                  flex-1 rounded-lg border
+                  border-slate-300 bg-white
+                  px-3 py-2
+                  text-slate-700
+                  outline-none
+                  transition
+                  hover:border-slate-400
+                  focus:border-blue-500
+                  focus:ring-2 focus:ring-blue-100
+                  dark:border-slate-600
+                  dark:bg-slate-900
+                  dark:text-slate-200
+                  dark:hover:border-slate-500
+                  dark:focus:border-blue-400
+                  dark:focus:ring-blue-900/40
+                "
                 aria-label="Hour"
               >
                 {Array.from({ length: 24 }, (_, hour) => (
@@ -257,12 +348,30 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
                 ))}
               </select>
 
-              <span className="font-semibold text-slate-500">:</span>
+              <span className="font-semibold text-slate-500 dark:text-slate-400">
+                :
+              </span>
 
               <select
                 value={selectedMinute}
                 onChange={(e) => handleMinuteChange(Number(e.target.value))}
-                className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition hover:border-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                className="
+                  flex-1 rounded-lg border
+                  border-slate-300 bg-white
+                  px-3 py-2
+                  text-slate-700
+                  outline-none
+                  transition
+                  hover:border-slate-400
+                  focus:border-blue-500
+                  focus:ring-2 focus:ring-blue-100
+                  dark:border-slate-600
+                  dark:bg-slate-900
+                  dark:text-slate-200
+                  dark:hover:border-slate-500
+                  dark:focus:border-blue-400
+                  dark:focus:ring-blue-900/40
+                "
                 aria-label="Minute"
               >
                 {Array.from({ length: 12 }, (_, index) => {
@@ -278,14 +387,23 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
             </div>
           </div>
 
-          <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3">
+          {/* Actions */}
+          <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
             <button
               type="button"
               onClick={() => {
                 onChange(undefined);
                 setIsOpen(false);
               }}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+              className="
+                rounded-lg px-3 py-2
+                text-sm font-medium
+                text-slate-600
+                transition
+                hover:bg-slate-100
+                dark:text-slate-300
+                dark:hover:bg-slate-700
+              "
             >
               Clear
             </button>
@@ -293,7 +411,20 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300"
+              className="
+                rounded-lg
+                bg-slate-900
+                px-3 py-2
+                text-sm font-medium text-white
+                transition
+                hover:bg-slate-700
+                focus:outline-none
+                focus:ring-2 focus:ring-slate-300
+                dark:bg-white
+                dark:text-slate-900
+                dark:hover:bg-slate-200
+                dark:focus:ring-slate-500
+              "
             >
               Done
             </button>
