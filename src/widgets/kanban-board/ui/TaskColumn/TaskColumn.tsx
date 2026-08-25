@@ -25,14 +25,20 @@ const TaskColumn = ({
   onUpdateTask,
 }: TaskColumnProps) => {
   const { container, badge } = columnStyles[variant];
+
   const { setNodeRef } = useDroppable({
     id: variant,
   });
 
   return (
-    <section className={`rounded-2xl ${container} p-5`} ref={setNodeRef}>
+    <section
+      ref={setNodeRef}
+      className={`rounded-2xl p-5 transition-colors ${container}`}
+    >
       <header className="mb-5 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800">{title}</h2>
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+          {title}
+        </h2>
 
         <span
           className={`flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-semibold ${badge}`}
@@ -47,10 +53,10 @@ const TaskColumn = ({
       >
         <div className="space-y-4">
           {tasks.length === 0 ? (
-            <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 p-6 text-center">
+            <div className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 p-6 text-center dark:border-slate-600">
               <p className="text-2xl">{isFiltered ? '🔎' : '📭'}</p>
 
-              <p className="font-medium text-slate-600">
+              <p className="font-medium text-slate-600 dark:text-slate-300">
                 {isFiltered ? 'No matching tasks' : 'No tasks yet'}
               </p>
 
