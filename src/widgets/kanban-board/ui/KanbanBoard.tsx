@@ -3,8 +3,13 @@ import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 import ConfirmDialog from '@/shared/ui/ConfirmDialog/ConfirmDialog';
 import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
 import { initialTasks } from '@/entities/task/model/initialTasks';
-import type { DragEndEvent } from '@dnd-kit/core';
-import { DndContext } from '@dnd-kit/core';
+import {
+  DndContext,
+  DragOverlay,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
 import { useState } from 'react';
 import TaskFilter from '@/features/task-filter/ui/TaskFilter';
 import type {
@@ -24,12 +29,15 @@ import {
   sortTasks,
   updateTask,
 } from '@/entities/task/lib/taskUtils';
+import { TaskCardDragOverlay } from '@/entities/task/ui/TaskCard/TaskCard';
 
 type TasksByStatus = {
   todo: Task[];
   'in-progress': Task[];
   done: Task[];
 };
+
+type InsertionPosition = 'before' | 'after' | null;
 
 const KanbanBoard = () => {
   const [tasks, setTasks] = useLocalStorage('tasks', initialTasks);
@@ -42,6 +50,14 @@ const KanbanBoard = () => {
   const [sort, setSort] = useState<TaskSort>('manual');
   const [dueDateFilter, setDueDateFilter] = useState<DueDateFilter>('all');
   const [taskIdToDelete, setTaskIdToDelete] = useState<Task['id'] | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
+  const [insertionTargetId, setInsertionTargetId] = useState<string | null>(
+    null,
+  );
+
+  const [insertionPosition, setInsertionPosition] =
+    useState<InsertionPosition>(null);
 
   const handleClearFilters = () => {
     setSearch('');
@@ -92,23 +108,104 @@ const KanbanBoard = () => {
     setTasks((prevTasks) => moveTask(prevTasks, taskId, overId));
   };
 
+  const handleDragStart = (e: DragStartEvent) => {
+    const task = tasks.find((item) => item.id === String(e.active.id));
+
+    setActiveTask(task ?? null);
+    setInsertionTargetId(null);
+    setInsertionPosition(null);
+  };
+
+  const handleDragOver = (e: DragOverEvent) => {
+    const { active, over } = e;
+
+    if (!over) {
+      setInsertionTargetId(null);
+      setInsertionPosition(null);
+      return;
+    }
+
+    const overId = String(over.id);
+    const activeId = String(active.id);
+
+    // Don't show an insertion indicator on the dragged card itself.
+    if (overId === activeId) {
+      setInsertionTargetId(null);
+      setInsertionPosition(null);
+      return;
+    }
+
+    const columnStatuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
+
+    // Dropping directly on an empty/whole column doesn't have
+    // a before/after position.
+    if (columnStatuses.includes(overId as TaskStatus)) {
+      setInsertionTargetId(null);
+      setInsertionPosition(null);
+      return;
+    }
+
+    const overTask = tasks.find((task) => task.id === overId);
+
+    if (!overTask) {
+      setInsertionTargetId(null);
+      setInsertionPosition(null);
+      return;
+    }
+
+    const activeRect = active.rect.current.translated;
+    const overRect = over.rect;
+
+    if (!activeRect) {
+      setInsertionTargetId(overId);
+      setInsertionPosition('before');
+      return;
+    }
+
+    const activeCenterY = activeRect.top + activeRect.height / 2;
+    const overCenterY = overRect.top + overRect.height / 2;
+
+    const position: InsertionPosition =
+      activeCenterY < overCenterY ? 'before' : 'after';
+
+    setInsertionTargetId(overId);
+    setInsertionPosition(position);
+  };
+
+  const clearInsertionIndicator = () => {
+    setInsertionTargetId(null);
+    setInsertionPosition(null);
+  };
+
   const handleDragEnd = (e: DragEndEvent) => {
-    if (!e.over) {
+    const over = e.over;
+
+    setActiveTask(null);
+
+    if (!over) {
+      clearInsertionIndicator();
       return;
     }
 
     const activeId = String(e.active.id);
-    const overId = String(e.over.id);
+    const overId = String(over.id);
 
     const columnStatuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
 
     const isDroppedOnColumn = columnStatuses.includes(overId as TaskStatus);
 
     if (sort !== 'manual' && !isDroppedOnColumn) {
+      clearInsertionIndicator();
       return;
     }
 
     handleMoveTask(activeId, overId);
+    clearInsertionIndicator();
+  };
+
+  const handleDragCancel = () => {
+    setActiveTask(null);
+    clearInsertionIndicator();
   };
 
   const filters: TaskFilters = {
@@ -151,8 +248,8 @@ const KanbanBoard = () => {
         onDueDateChange={setDueDateFilter}
       />
 
-      <div className="mb-6 flex items-center justify-between">
-        <p className="text-sm text-slate-500">
+      <div className="mb-6 flex min-w-0 items-center justify-between gap-4">
+        <p className="min-w-0 text-sm text-slate-500">
           {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}{' '}
           found
         </p>
@@ -161,20 +258,27 @@ const KanbanBoard = () => {
           <button
             type="button"
             onClick={handleClearFilters}
-            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+            className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-800"
           >
             Clear filters
           </button>
         )}
       </div>
 
-      <DndContext onDragEnd={handleDragEnd}>
-        <section className="grid gap-6 md:grid-cols-3">
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <section className="grid min-w-0 gap-6 md:grid-cols-3">
           <TaskColumn
             title="Todo"
             variant="todo"
             tasks={tasksByStatus.todo}
             isFiltered={hasActiveFilters}
+            insertionTargetId={insertionTargetId}
+            insertionPosition={insertionPosition}
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleUpdateTask}
           />
@@ -184,6 +288,8 @@ const KanbanBoard = () => {
             variant="in-progress"
             tasks={tasksByStatus['in-progress']}
             isFiltered={hasActiveFilters}
+            insertionTargetId={insertionTargetId}
+            insertionPosition={insertionPosition}
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleUpdateTask}
           />
@@ -193,11 +299,18 @@ const KanbanBoard = () => {
             variant="done"
             tasks={tasksByStatus.done}
             isFiltered={hasActiveFilters}
+            insertionTargetId={insertionTargetId}
+            insertionPosition={insertionPosition}
             onDeleteTask={handleDeleteTask}
             onUpdateTask={handleUpdateTask}
           />
         </section>
+
+        <DragOverlay dropAnimation={null}>
+          {activeTask ? <TaskCardDragOverlay task={activeTask} /> : null}
+        </DragOverlay>
       </DndContext>
+
       <ConfirmDialog
         isOpen={taskIdToDelete !== null}
         title="Delete task?"

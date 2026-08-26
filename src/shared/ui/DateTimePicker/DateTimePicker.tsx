@@ -160,12 +160,12 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className="
-          flex w-full items-center justify-between
+          flex w-full min-w-0 items-center justify-between gap-2
           rounded-xl border
           border-slate-300 bg-white
           px-4 py-3
@@ -183,30 +183,35 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
           dark:focus:ring-blue-900/40
         "
       >
-        <span>{inputValue || 'Select date & time'}</span>
+        <span className="min-w-0 truncate">
+          {inputValue || 'Select date & time'}
+        </span>
 
-        <span className="text-slate-400 dark:text-slate-500">▾</span>
+        <span className="shrink-0 text-slate-400 dark:text-slate-500">▾</span>
       </button>
 
       {isOpen && (
         <div
           className="
-            absolute left-0 top-full z-10 mt-2
-            w-full min-w-80
+            absolute left-0 top-full z-50 mt-2
+            w-full max-w-full
+            min-w-0
+            overflow-hidden
             rounded-2xl border
             border-slate-200 bg-white
-            p-4 shadow-xl
+            p-3 shadow-xl
             dark:border-slate-700
             dark:bg-slate-800
+            sm:p-4
           "
         >
           {/* Calendar header */}
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
             <button
               type="button"
               onClick={handlePreviousMonth}
               className="
-                flex h-9 w-9 items-center justify-center
+                flex h-9 w-9 shrink-0 items-center justify-center
                 rounded-lg
                 text-lg text-slate-500
                 transition
@@ -221,8 +226,8 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
               ←
             </button>
 
-            <div className="flex flex-col items-center">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            <div className="min-w-0 flex-1 text-center">
+              <h3 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
                 {monthLabel}
               </h3>
 
@@ -246,7 +251,7 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
               type="button"
               onClick={handleNextMonth}
               className="
-                flex h-9 w-9 items-center justify-center
+                flex h-9 w-9 shrink-0 items-center justify-center
                 rounded-lg
                 text-lg text-slate-500
                 transition
@@ -265,7 +270,7 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
           {/* Weekdays */}
           <div
             className="
-              mb-2 grid grid-cols-7
+              mb-2 grid min-w-0 grid-cols-7
               text-center text-xs font-medium
               text-slate-400
               dark:text-slate-500
@@ -281,7 +286,7 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
           </div>
 
           {/* Days */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid min-w-0 grid-cols-7 gap-1">
             {Array.from({ length: firstDayOfWeek - 1 }).map((_, index) => (
               <div key={`empty-${index}`} />
             ))}
@@ -292,7 +297,7 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
                 type="button"
                 onClick={() => handleSelectDay(day)}
                 className={`
-                  flex h-9 items-center justify-center
+                  flex aspect-square min-w-0 items-center justify-center
                   rounded-lg text-sm
                   transition
                   focus:outline-none focus:ring-2
@@ -318,14 +323,15 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
               Time
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <select
                 value={selectedHour}
                 onChange={(e) => handleHourChange(Number(e.target.value))}
                 className="
-                  flex-1 rounded-lg border
+                  min-w-0 flex-1
+                  rounded-lg border
                   border-slate-300 bg-white
-                  px-3 py-2
+                  px-2 py-2
                   text-slate-700
                   outline-none
                   transition
@@ -348,7 +354,7 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
                 ))}
               </select>
 
-              <span className="font-semibold text-slate-500 dark:text-slate-400">
+              <span className="shrink-0 font-semibold text-slate-500 dark:text-slate-400">
                 :
               </span>
 
@@ -356,9 +362,10 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
                 value={selectedMinute}
                 onChange={(e) => handleMinuteChange(Number(e.target.value))}
                 className="
-                  flex-1 rounded-lg border
+                  min-w-0 flex-1
+                  rounded-lg border
                   border-slate-300 bg-white
-                  px-3 py-2
+                  px-2 py-2
                   text-slate-700
                   outline-none
                   transition
@@ -388,7 +395,7 @@ const DateTimePicker = ({ value, onChange }: DateTimePickerProps) => {
           </div>
 
           {/* Actions */}
-          <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
+          <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
             <button
               type="button"
               onClick={() => {
