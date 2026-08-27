@@ -12,6 +12,7 @@ interface TaskCardProps {
   task: Task;
   onDeleteTask: (taskId: Task['id']) => void;
   onUpdateTask: (taskId: Task['id'], updatedData: Partial<Task>) => void;
+  insertionPosition: 'before' | 'after' | null;
 }
 
 const priorityColors = {
@@ -96,7 +97,12 @@ const TaskCardDragOverlay = ({ task }: { task: Task }) => {
   );
 };
 
-const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
+const TaskCard = ({
+  task,
+  onDeleteTask,
+  onUpdateTask,
+  insertionPosition,
+}: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -104,7 +110,6 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     transform,
     transition,
     isDragging,
-    isOver,
   } = useSortable({
     id: task.id,
   });
@@ -333,8 +338,18 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         isDragging ? 'border-blue-400 opacity-30 shadow-lg' : ''
       }`}
     >
-      {isOver && !isDragging && (
-        <div className="absolute -top-2 left-0 right-0 h-1 rounded-full bg-blue-500" />
+      {insertionPosition === 'before' && (
+        <div
+          className="pointer-events-none absolute left-3 right-3 top-0 z-20 h-1 rounded-full bg-blue-500"
+          aria-hidden="true"
+        />
+      )}
+
+      {insertionPosition === 'after' && (
+        <div
+          className="pointer-events-none absolute bottom-0 left-3 right-3 z-20 h-1 rounded-full bg-blue-500"
+          aria-hidden="true"
+        />
       )}
 
       <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
