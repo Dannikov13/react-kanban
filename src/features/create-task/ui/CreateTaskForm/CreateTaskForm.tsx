@@ -50,7 +50,7 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mb-8 box-border min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-800"
+      className="mb-8 box-border min-w-0 max-w-full overflow-visible rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-800"
     >
       <div className="mb-6 min-w-0 max-w-full">
         <h2 className="break-words text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
