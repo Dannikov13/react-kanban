@@ -12,20 +12,22 @@ interface TaskCardProps {
   task: Task;
   onDeleteTask: (taskId: Task['id']) => void;
   onUpdateTask: (taskId: Task['id'], updatedData: Partial<Task>) => void;
+  insertionPosition: 'before' | 'after' | null;
 }
 
 const priorityColors = {
-  low: 'bg-green-100 text-green-700',
-  medium: 'bg-yellow-100 text-yellow-700',
-  high: 'bg-red-100 text-red-700',
+  low: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  medium:
+    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+  high: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
 };
 
 const dueDateStyles: Record<DueDateStatus, string> = {
   none: '',
-  overdue: 'text-red-600',
-  today: 'text-amber-600',
-  tomorrow: 'text-blue-600',
-  upcoming: 'text-slate-500',
+  overdue: 'text-red-600 dark:text-red-400',
+  today: 'text-amber-600 dark:text-amber-400',
+  tomorrow: 'text-blue-600 dark:text-blue-400',
+  upcoming: 'text-slate-500 dark:text-slate-400',
 };
 
 const dueDateLabels: Record<DueDateStatus, string> = {
@@ -36,7 +38,71 @@ const dueDateLabels: Record<DueDateStatus, string> = {
   upcoming: 'Due',
 };
 
-const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
+const TaskCardDragOverlay = ({ task }: { task: Task }) => {
+  const dueDateStatus = getDueDateStatus(task.dueDate);
+
+  return (
+    <article className="w-full max-w-md min-w-0 rotate-1 overflow-hidden rounded-xl border border-blue-400 bg-white p-4 shadow-2xl dark:border-blue-500 dark:bg-slate-800">
+      <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
+        <h3 className="min-w-0 max-w-full break-words font-medium text-slate-900 dark:text-slate-100 [overflow-wrap:anywhere]">
+          {task.title}
+        </h3>
+
+        <span
+          className="shrink-0 rounded px-2 py-1 text-slate-400"
+          aria-hidden="true"
+        >
+          ⋮⋮
+        </span>
+      </div>
+
+      {task.description && (
+        <p className="mt-2 min-w-0 max-w-full break-words text-sm text-slate-600 dark:text-slate-300 [overflow-wrap:anywhere]">
+          {task.description}
+        </p>
+      )}
+
+      <div className="mt-4 flex min-w-0 items-center justify-between gap-3">
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${priorityColors[task.priority]}`}
+        >
+          {task.priority}
+        </span>
+
+        {task.dueDate !== undefined && (
+          <div className="min-w-0">
+            <p
+              className={`break-words text-sm font-medium ${dueDateStyles[dueDateStatus]}`}
+            >
+              {dueDateLabels[dueDateStatus]}: {formatDueDate(task.dueDate)}
+            </p>
+          </div>
+        )}
+
+        <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+          {task.status}
+        </span>
+      </div>
+
+      <div className="mt-4 flex gap-2">
+        <span className="rounded-lg bg-red-500 px-3 py-1 text-sm text-white opacity-70">
+          Delete
+        </span>
+
+        <span className="rounded-lg bg-yellow-500 px-3 py-1 text-sm text-white opacity-70">
+          Edit
+        </span>
+      </div>
+    </article>
+  );
+};
+
+const TaskCard = ({
+  task,
+  onDeleteTask,
+  onUpdateTask,
+  insertionPosition,
+}: TaskCardProps) => {
   const {
     attributes,
     listeners,
@@ -44,7 +110,6 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     transform,
     transition,
     isDragging,
-    isOver,
   } = useSortable({
     id: task.id,
   });
@@ -100,16 +165,20 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
       <article
         ref={setNodeRef}
         style={style}
-        className={`group relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
-          isDragging ? 'border-blue-400 opacity-60 shadow-lg' : ''
+        className={`group relative min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-800 ${
+          isDragging ? 'border-blue-400 opacity-30 shadow-lg' : ''
         }`}
       >
-        <div className="mb-3 flex items-center justify-end">
+        <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
+          <h3 className="min-w-0 break-words text-lg font-semibold text-slate-900 dark:text-slate-100 [overflow-wrap:anywhere]">
+            Edit task
+          </h3>
+
           <button
             type="button"
             {...attributes}
             {...listeners}
-            className="cursor-grab rounded px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
+            className="shrink-0 cursor-grab rounded-lg px-2 py-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing dark:hover:bg-slate-700 dark:hover:text-slate-200"
             aria-label="Drag task"
             disabled={isDragging}
           >
@@ -118,49 +187,64 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
         </div>
 
         <form
-          className="flex flex-col gap-3"
+          className="min-w-0 flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
             handleSave();
           }}
         >
-          <label className="text-sm font-medium text-slate-700">Title</label>
+          <div className="flex min-w-0 flex-col gap-2">
+            <label
+              htmlFor={`edit-title-${task.id}`}
+              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Title
+            </label>
 
-          <input
-            className={`rounded-lg border px-3 py-2 outline-none ${
-              isTitleEmpty
-                ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100'
-                : 'border-slate-300 focus:border-slate-500 focus:ring-2 focus:ring-slate-200'
-            }`}
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                title: e.target.value,
-              })
-            }
-          />
+            <input
+              id={`edit-title-${task.id}`}
+              type="text"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  title: e.target.value,
+                })
+              }
+              className={`w-full min-w-0 max-w-full rounded-xl border bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all dark:bg-slate-900 dark:text-slate-200 ${
+                isTitleEmpty
+                  ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-red-500 dark:focus:ring-red-900/40'
+                  : 'border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40'
+              }`}
+            />
 
-          {isTitleEmpty && (
-            <p className="text-sm text-red-500">Title is required.</p>
-          )}
+            {isTitleEmpty && (
+              <p className="text-sm text-red-500 dark:text-red-400">
+                Title is required.
+              </p>
+            )}
+          </div>
 
-          <label className="text-sm font-medium text-slate-700">
-            Description
-          </label>
+          <div className="flex min-w-0 flex-col gap-2">
+            <label
+              htmlFor={`edit-description-${task.id}`}
+              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Description
+            </label>
 
-          <textarea
-            className="rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                description: e.target.value,
-              })
-            }
-          />
-
-          <label className="text-sm font-medium text-slate-700">Due date</label>
+            <textarea
+              id={`edit-description-${task.id}`}
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  description: e.target.value,
+                })
+              }
+              className="min-h-24 w-full min-w-0 max-w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
+            />
+          </div>
 
           <DateTimePicker
             value={formData.dueDate}
@@ -172,55 +256,71 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
             }
           />
 
-          <label className="text-sm font-medium text-slate-700">Priority</label>
+          <div className="flex min-w-0 flex-col gap-2">
+            <label
+              htmlFor={`edit-priority-${task.id}`}
+              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Priority
+            </label>
 
-          <select
-            className="rounded-lg border border-slate-300 px-3 py-2"
-            value={formData.priority}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                priority: e.target.value as Task['priority'],
-              })
-            }
-            disabled={isDragging}
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
+            <select
+              id={`edit-priority-${task.id}`}
+              value={formData.priority}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  priority: e.target.value as Task['priority'],
+                })
+              }
+              disabled={isDragging}
+              className="w-full min-w-0 max-w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
 
-          <label className="text-sm font-medium text-slate-700">Status</label>
+          <div className="flex min-w-0 flex-col gap-2">
+            <label
+              htmlFor={`edit-status-${task.id}`}
+              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+            >
+              Status
+            </label>
 
-          <select
-            className="rounded-lg border border-slate-300 px-3 py-2"
-            value={formData.status}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                status: e.target.value as TaskStatus,
-              })
-            }
-            disabled={isDragging}
-          >
-            <option value="todo">Todo</option>
-            <option value="in-progress">In Progress</option>
-            <option value="done">Done</option>
-          </select>
+            <select
+              id={`edit-status-${task.id}`}
+              value={formData.status}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  status: e.target.value as TaskStatus,
+                })
+              }
+              disabled={isDragging}
+              className="w-full min-w-0 max-w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
+            >
+              <option value="todo">Todo</option>
+              <option value="in-progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
 
-          <div className="flex gap-2">
+          <div className="mt-2 flex min-w-0 flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-700">
             <button
               type="submit"
               disabled={isTitleEmpty}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="max-w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400 dark:hover:bg-blue-500"
             >
-              Save
+              Save changes
             </button>
 
             <button
               type="button"
               onClick={handleCancel}
-              className="rounded-lg border border-slate-300 px-4 py-2 transition hover:bg-slate-100"
+              className="max-w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               Cancel
             </button>
@@ -234,22 +334,34 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
     <article
       ref={setNodeRef}
       style={style}
-      className={`relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
-        isDragging ? 'border-blue-400 opacity-60 shadow-lg' : ''
+      className={`relative min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800 ${
+        isDragging ? 'border-blue-400 opacity-30 shadow-lg' : ''
       }`}
     >
-      {isOver && !isDragging && (
-        <div className="absolute -top-2 left-0 right-0 h-1 rounded-full bg-blue-500" />
+      {insertionPosition === 'before' && (
+        <div
+          className="pointer-events-none absolute left-3 right-3 top-0 z-20 h-1 rounded-full bg-blue-500"
+          aria-hidden="true"
+        />
       )}
 
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <h3 className="font-medium text-slate-900">{task.title}</h3>
+      {insertionPosition === 'after' && (
+        <div
+          className="pointer-events-none absolute bottom-0 left-3 right-3 z-20 h-1 rounded-full bg-blue-500"
+          aria-hidden="true"
+        />
+      )}
+
+      <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
+        <h3 className="min-w-0 max-w-full break-words font-medium text-slate-900 dark:text-slate-100 [overflow-wrap:anywhere]">
+          {task.title}
+        </h3>
 
         <button
           type="button"
           {...attributes}
           {...listeners}
-          className="shrink-0 cursor-grab touch-none rounded px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
+          className="shrink-0 cursor-grab touch-none rounded px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing dark:hover:bg-slate-700 dark:hover:text-slate-200"
           aria-label="Drag task"
           disabled={isDragging}
         >
@@ -258,30 +370,34 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
       </div>
 
       {task.description && (
-        <p className="mt-2 text-sm text-slate-600">{task.description}</p>
+        <p className="mt-2 min-w-0 max-w-full break-words text-sm text-slate-600 dark:text-slate-300 [overflow-wrap:anywhere]">
+          {task.description}
+        </p>
       )}
 
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-4 flex min-w-0 items-center justify-between gap-3">
         <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${priorityColors[task.priority]}`}
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${priorityColors[task.priority]}`}
         >
           {task.priority}
         </span>
 
         {task.dueDate !== undefined && (
-          <div>
+          <div className="min-w-0">
             <p
-              className={`text-sm font-medium ${dueDateStyles[dueDateStatus]}`}
+              className={`break-words text-sm font-medium ${dueDateStyles[dueDateStatus]}`}
             >
               {dueDateLabels[dueDateStatus]}: {formatDueDate(task.dueDate)}
             </p>
           </div>
         )}
 
-        <span className="text-xs text-slate-500">{task.status}</span>
+        <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+          {task.status}
+        </span>
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => onDeleteTask(task.id)}
@@ -302,4 +418,5 @@ const TaskCard = ({ task, onDeleteTask, onUpdateTask }: TaskCardProps) => {
   );
 };
 
+export { TaskCardDragOverlay };
 export default TaskCard;
