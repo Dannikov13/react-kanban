@@ -144,6 +144,7 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
 
             <div className="min-w-0 max-w-full">
               <Select
+                id="priority"
                 value={formData.priority}
                 onChange={(value) => handleChange('priority', value)}
                 options={[
