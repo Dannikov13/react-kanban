@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { TaskRepository } from '../repositories/taskRepository.js';
 import { TaskService } from '../services/taskService.js';
 
@@ -11,10 +11,12 @@ export const getTasks = (_req: Request, res: Response) => {
   res.json(tasks);
 };
 
-export const createTask = (req: Request, res: Response) => {
-  console.log('BODY:', req.body);
+export const createTask = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const task = taskService.createTask(req.body);
 
-  const task = taskService.createTask(req.body);
-
-  res.status(201).json(task);
+    res.status(201).json(task);
+  } catch (error) {
+    next(error);
+  }
 };
