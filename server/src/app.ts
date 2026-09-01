@@ -1,3 +1,4 @@
+import express, { ErrorRequestHandler } from 'express';
 import taskRoutes from './routes/taskRoutes.js';
 
 const app = express();
