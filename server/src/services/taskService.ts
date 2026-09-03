@@ -6,11 +6,11 @@ import { AppError } from '../errors/AppError.js';
 export class TaskService {
   constructor(private taskRepository: TaskRepository) {}
 
-  getTasks(): Task[] {
+  async getTasks(): Promise<Task[]> {
     return this.taskRepository.findAll();
   }
 
-  createTask(data: CreateTaskData): Task {
+  async createTask(data: CreateTaskData): Promise<Task> {
     if (!data.title.trim()) {
       throw new AppError('Title is required', 400);
     }
@@ -32,6 +32,6 @@ export class TaskService {
       throw new AppError('Invalid dueDate', 400);
     }
 
-    return this.taskRepository.create(data);
+    return await this.taskRepository.create(data);
   }
 }

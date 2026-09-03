@@ -1,36 +1,49 @@
+import { pool } from '../db.js';
 import { CreateTaskData, Task } from '../types/task.js';
 
 export class TaskRepository {
-  private tasks: Task[] = [
-    {
-      id: '1',
-      title: 'Learn backend',
-      description: 'Continue working on the Kanban backend',
-      priority: 'high',
-      status: 'in-progress',
-      createdAt: Date.now(),
-    },
-    {
-      id: '2',
-      title: 'Connect database',
-      priority: 'medium',
-      status: 'todo',
-      createdAt: Date.now(),
-    },
-  ];
+  async findAll(): Promise<Task[]> {
+    const result = await pool.query('SELECT * FROM tasks');
 
-  findAll(): Task[] {
-    return this.tasks;
+    return result.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description ?? undefined,
+      dueDate: row.due_date !== null ? Number(row.due_date) : undefined,
+      priority: row.priority,
+      status: row.status,
+      createdAt: Number(row.created_at),
+    }));
   }
 
-  create(data: CreateTaskData): Task {
+  async create(data: CreateTaskData): Promise<Task> {
     const task: Task = {
       id: crypto.randomUUID(),
       ...data,
       createdAt: Date.now(),
     };
 
-    this.tasks.push(task);
+    await pool.query(
+      `INSERT INTO tasks (
+    id,
+    title,
+    description,
+    due_date,
+    priority,
+    status,
+    created_at
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        task.id,
+        task.title,
+        task.description ?? null,
+        task.dueDate ?? null,
+        task.priority,
+        task.status,
+        task.createdAt,
+      ],
+    );
 
     return task;
   }
