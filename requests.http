@@ -1,0 +1,86 @@
+GET http://localhost:3000/api/tasks
+
+###
+
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "HTTP Client task",
+  "description": "Created from WebStorm",
+  "priority": "medium",
+  "status": "todo"
+}
+
+###
+
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "",
+  "description": "Testing validation",
+  "priority": "high",
+  "status": "todo"
+}
+
+###
+
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Test invalid priority",
+  "description": "Testing priority validation",
+  "priority": "urgent",
+  "status": "todo"
+}
+
+###
+
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Test invalid status",
+  "description": "Testing status validation",
+  "priority": "medium",
+  "status": "cancelled"
+}
+
+###
+
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Test invalid description",
+  "description": 123,
+  "priority": "medium",
+  "status": "todo"
+}
+
+###
+
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Test invalid dueDate",
+  "description": "Testing dueDate validation",
+  "priority": "medium",
+  "status": "todo",
+  "dueDate": "tomorrow"
+}
+
+###
+
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Test PostgreSQL",
+  "description": "Create task in database",
+  "priority": "high",
+  "status": "todo"
+}
