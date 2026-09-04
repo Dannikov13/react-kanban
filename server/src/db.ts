@@ -6,6 +6,7 @@ export const pool = new Pool({
   host: 'localhost',
   port: 5432,
   user: 'kanban',
+
   password: 'kanban',
   database: 'kanban',
 });
