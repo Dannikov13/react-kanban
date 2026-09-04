@@ -24,3 +24,34 @@ export const createTask = async (
     next(error);
   }
 };
+
+export const updateTask = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const task = await taskService.updateTask(
+      req.params.id as string,
+      req.body,
+    );
+
+    res.json(task);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteTask = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    await taskService.deleteTask(req.params.id as string);
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,7 +1,9 @@
+### Get all tasks
 GET http://localhost:3000/api/tasks
 
 ###
 
+### Create task
 POST http://localhost:3000/api/tasks
 Content-Type: application/json
 
@@ -14,73 +16,16 @@ Content-Type: application/json
 
 ###
 
-POST http://localhost:3000/api/tasks
+### Update task
+PUT http://localhost:3000/api/tasks/de42da14-c05b-48b7-b2be-f1dedf1bfa89
 Content-Type: application/json
 
 {
-  "title": "",
-  "description": "Testing validation",
-  "priority": "high",
-  "status": "todo"
-}
-
-###
-
-POST http://localhost:3000/api/tasks
-Content-Type: application/json
-
-{
-  "title": "Test invalid priority",
-  "description": "Testing priority validation",
-  "priority": "urgent",
-  "status": "todo"
-}
-
-###
-
-POST http://localhost:3000/api/tasks
-Content-Type: application/json
-
-{
-  "title": "Test invalid status",
-  "description": "Testing status validation",
+  "title": "Updated PostgreSQL task",
+  "description": "Task was updated successfully",
   "priority": "medium",
-  "status": "cancelled"
+  "status": "in-progress"
 }
 
 ###
-
-POST http://localhost:3000/api/tasks
-Content-Type: application/json
-
-{
-  "title": "Test invalid description",
-  "description": 123,
-  "priority": "medium",
-  "status": "todo"
-}
-
-###
-
-POST http://localhost:3000/api/tasks
-Content-Type: application/json
-
-{
-  "title": "Test invalid dueDate",
-  "description": "Testing dueDate validation",
-  "priority": "medium",
-  "status": "todo",
-  "dueDate": "tomorrow"
-}
-
-###
-
-POST http://localhost:3000/api/tasks
-Content-Type: application/json
-
-{
-  "title": "Test PostgreSQL",
-  "description": "Create task in database",
-  "priority": "high",
-  "status": "todo"
-}
+DELETE http://localhost:3000/api/tasks/de42da14-c05b-48b7-b2be-f1dedf1bfa89
