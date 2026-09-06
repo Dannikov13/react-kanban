@@ -12,6 +12,7 @@ export interface Task {
   priority: TaskPriority;
   status: TaskStatus;
   createdAt?: number;
+  position: number;
 }
 
 export interface CreateTaskData {
