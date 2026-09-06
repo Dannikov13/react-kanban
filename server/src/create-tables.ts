@@ -8,7 +8,8 @@ await pool.query(`
     due_date BIGINT,
     priority TEXT NOT NULL,
     status TEXT NOT NULL,
-    created_at BIGINT
+    created_at BIGINT,
+    position INTEGER NOT NULL
   );
 `);
 

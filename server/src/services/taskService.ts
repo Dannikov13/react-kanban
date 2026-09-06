@@ -11,7 +11,7 @@ export class TaskService {
   }
 
   async createTask(data: CreateTaskData): Promise<Task> {
-    if (!data.title.trim()) {
+    if (typeof data.title !== 'string' || !data.title.trim()) {
       throw new AppError('Title is required', 400);
     }
 
@@ -30,7 +30,7 @@ export class TaskService {
       throw new AppError('Invalid description', 400);
     }
 
-    if (data.dueDate !== undefined && typeof data.dueDate !== 'number') {
+    if (data.dueDate !== undefined && !Number.isFinite(data.dueDate)) {
       throw new AppError('Invalid dueDate', 400);
     }
 
@@ -38,7 +38,7 @@ export class TaskService {
   }
 
   async updateTask(id: string, data: CreateTaskData): Promise<Task> {
-    if (!data.title.trim()) {
+    if (typeof data.title !== 'string' || !data.title.trim()) {
       throw new AppError('Title is required', 400);
     }
 
@@ -57,14 +57,24 @@ export class TaskService {
       throw new AppError('Invalid description', 400);
     }
 
-    if (data.dueDate !== undefined && typeof data.dueDate !== 'number') {
+    if (data.dueDate !== undefined && !Number.isFinite(data.dueDate)) {
       throw new AppError('Invalid dueDate', 400);
     }
 
-    return await this.taskRepository.update(id, data);
+    const task = await this.taskRepository.update(id, data);
+
+    if (!task) {
+      throw new AppError('Task not found', 404);
+    }
+
+    return task;
   }
 
   async deleteTask(id: string): Promise<void> {
-    await this.taskRepository.delete(id);
+    const deleted = await this.taskRepository.delete(id);
+
+    if (!deleted) {
+      throw new AppError('Task not found', 404);
+    }
   }
 }

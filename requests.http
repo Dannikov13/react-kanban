@@ -1,31 +1,62 @@
 ### Get all tasks
 GET http://localhost:3000/api/tasks
 
-###
 
 ### Create task
 POST http://localhost:3000/api/tasks
 Content-Type: application/json
 
 {
-  "title": "HTTP Client task",
-  "description": "Created from WebStorm",
-  "priority": "medium",
-  "status": "todo"
+  "title": "Test missing status",
+  "priority": "medium"
 }
 
 ###
 
-### Update task
-PUT http://localhost:3000/api/tasks/de42da14-c05b-48b7-b2be-f1dedf1bfa89
+
+### Move task to non-empty done
+PUT http://localhost:3000/api/tasks/546b6c3e-14e0-4f39-b749-b3feba9a8631
 Content-Type: application/json
 
 {
-  "title": "Updated PostgreSQL task",
-  "description": "Task was updated successfully",
+  "title": "Test due date",
   "priority": "medium",
+  "status": "done"
+}
+
+
+### Update task
+PUT http://localhost:3000/api/tasks/782196d8-1e2f-4ec7-99fc-7a0e8f2ffabd
+Content-Type: application/json
+
+{
+  "title": "AB",
+  "priority": "high",
   "status": "in-progress"
 }
 
-###
-DELETE http://localhost:3000/api/tasks/de42da14-c05b-48b7-b2be-f1dedf1bfa89
+
+### Delete task
+DELETE http://localhost:3000/api/tasks/ТУТ_ID_ЗАДАЧИ
+
+
+### Create task — invalid title
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Test status",
+  "priority": "medium",
+  "status": "something"
+}
+
+
+### Create task — empty title
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "",
+  "priority": "medium",
+  "status": "todo"
+}
