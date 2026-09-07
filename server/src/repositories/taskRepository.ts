@@ -1,5 +1,5 @@
 import { pool } from '../db.js';
-import { CreateTaskData, Task } from '../types/task.js';
+import { CreateTaskData, Task, UpdateTaskPositionData } from '../types/task.js';
 
 export class TaskRepository {
   async findAll(): Promise<Task[]> {
@@ -37,17 +37,15 @@ export class TaskRepository {
     };
 
     await pool.query(
-      `INSERT INTO tasks (
-        id,
-        title,
-        description,
-        due_date,
-        priority,
-        status,
-        created_at,
-        position
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      `INSERT INTO tasks (id,
+                          title,
+                          description,
+                          due_date,
+                          priority,
+                          status,
+                          created_at,
+                          position)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         task.id,
         task.title,
@@ -71,8 +69,8 @@ export class TaskRepository {
 
       const currentResult = await client.query(
         `SELECT *
-       FROM tasks
-       WHERE id = $1`,
+         FROM tasks
+         WHERE id = $1`,
         [id],
       );
 
@@ -91,8 +89,8 @@ export class TaskRepository {
       if (oldStatus !== data.status) {
         const positionResult = await client.query(
           `SELECT COALESCE(MAX(position), -1) + 1 AS position
-         FROM tasks
-         WHERE status = $1`,
+           FROM tasks
+           WHERE status = $1`,
           [data.status],
         );
 
@@ -100,24 +98,22 @@ export class TaskRepository {
 
         await client.query(
           `UPDATE tasks
-         SET position = position - 1
-         WHERE status = $1
-           AND position > $2`,
+           SET position = position - 1
+           WHERE status = $1
+             AND position > $2`,
           [oldStatus, oldPosition],
         );
       }
 
       const result = await client.query(
         `UPDATE tasks
-       SET
-         title = $1,
-         description = $2,
-         due_date = $3,
-         priority = $4,
-         status = $5,
-         position = $6
-       WHERE id = $7
-       RETURNING *`,
+         SET title       = $1,
+             description = $2,
+             due_date    = $3,
+             priority    = $4,
+             status      = $5,
+             position    = $6
+         WHERE id = $7 RETURNING *`,
         [
           data.title,
           data.description ?? null,
@@ -153,12 +149,37 @@ export class TaskRepository {
 
   async delete(id: string): Promise<boolean> {
     const result = await pool.query(
-      `DELETE FROM tasks
-       WHERE id = $1
-       RETURNING id`,
+      `DELETE
+       FROM tasks
+       WHERE id = $1 RETURNING id`,
       [id],
     );
 
     return result.rows.length > 0;
+  }
+
+  async updatePositions(tasks: UpdateTaskPositionData[]): Promise<void> {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      for (const task of tasks) {
+        await client.query(
+          `UPDATE tasks
+           SET status   = $1,
+               position = $2
+           WHERE id = $3`,
+          [task.status, task.position, task.id],
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
