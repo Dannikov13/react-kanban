@@ -55,3 +55,17 @@ export const deleteTask = async (
     next(error);
   }
 };
+
+export const updateTaskPositions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    await taskService.updateTaskPositions(req.body.tasks);
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};

@@ -22,3 +22,9 @@ export interface CreateTaskData {
   priority: TaskPriority;
   status: TaskStatus;
 }
+
+export interface UpdateTaskPositionData {
+  id: string;
+  status: TaskStatus;
+  position: number;
+}
