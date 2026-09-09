@@ -13,6 +13,16 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:3000/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Frontend POST test",
+  "description": "Testing POST from frontend flow",
+  "priority": "high",
+  "status": "todo"
+}
+
 
 ### Move task to non-empty done
 PUT http://localhost:3000/api/tasks/546b6c3e-14e0-4f39-b749-b3feba9a8631
@@ -59,4 +69,24 @@ Content-Type: application/json
   "title": "",
   "priority": "medium",
   "status": "todo"
+}
+
+
+###Update task positions
+PATCH http://localhost:3000/api/tasks/positions
+Content-Type: application/json
+
+{
+  "tasks": [
+    {
+      "id": "376236c9-34a8-44f2-9cc8-22b5a84d7723",
+      "status": "done",
+      "position": 1
+    },
+    {
+      "id": "546b6c3e-14e0-4f39-b749-b3feba9a8631",
+      "status": "done",
+      "position": 0
+    }
+  ]
 }

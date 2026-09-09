@@ -1,16 +1,14 @@
 import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 import ConfirmDialog from '@/shared/ui/ConfirmDialog/ConfirmDialog';
-import { useLocalStorage } from '@/shared/hooks/useLocalStorage';
-import { initialTasks } from '@/entities/task/model/initialTasks';
 import {
   DndContext,
-  DragOverlay,
   type DragEndEvent,
   type DragOverEvent,
+  DragOverlay,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TaskFilter from '@/features/task-filter/ui/TaskFilter';
 import type {
   CreateTaskData,
@@ -22,7 +20,6 @@ import type {
   TaskStatus,
 } from '@/entities/task';
 import {
-  createTask,
   deleteTask,
   filterTasks,
   moveTask,
@@ -30,6 +27,11 @@ import {
   updateTask,
 } from '@/entities/task/lib/taskUtils';
 import { TaskCardDragOverlay } from '@/entities/task/ui/TaskCard/TaskCard';
+import {
+  createTask,
+  getTasks,
+  updateTaskPositions,
+} from '@/shared/api/taskApi.ts';
 
 type TasksByStatus = {
   todo: Task[];
@@ -40,7 +42,17 @@ type TasksByStatus = {
 type InsertionPosition = 'before' | 'after' | null;
 
 const KanbanBoard = () => {
-  const [tasks, setTasks] = useLocalStorage('tasks', initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      const tasks = await getTasks();
+
+      setTasks(tasks);
+    };
+
+    loadTasks();
+  }, []);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
@@ -74,11 +86,8 @@ const KanbanBoard = () => {
     sort !== 'manual' ||
     dueDateFilter !== 'all';
 
-  const handleCreateTask = (data: CreateTaskData) => {
-    const newTask = createTask({
-      ...data,
-      createdAt: Date.now(),
-    });
+  const handleCreateTask = async (data: CreateTaskData) => {
+    const newTask = await createTask(data);
 
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
@@ -102,10 +111,6 @@ const KanbanBoard = () => {
 
   const handleUpdateTask = (taskId: Task['id'], updatedData: Partial<Task>) => {
     setTasks((prevTasks) => updateTask(prevTasks, taskId, updatedData));
-  };
-
-  const handleMoveTask = (taskId: Task['id'], overId: string) => {
-    setTasks((prevTasks) => moveTask(prevTasks, taskId, overId));
   };
 
   const handleDragStart = (e: DragStartEvent) => {
@@ -177,7 +182,7 @@ const KanbanBoard = () => {
     setInsertionPosition(null);
   };
 
-  const handleDragEnd = (e: DragEndEvent) => {
+  const handleDragEnd = async (e: DragEndEvent) => {
     const over = e.over;
 
     setActiveTask(null);
@@ -199,7 +204,35 @@ const KanbanBoard = () => {
       return;
     }
 
-    handleMoveTask(activeId, overId);
+    const newTasks = moveTask(tasks, activeId, overId);
+
+    const positionsByStatus: Record<TaskStatus, number> = {
+      todo: 0,
+      'in-progress': 0,
+      done: 0,
+    };
+
+    const updatedTasks = newTasks.map((task) => {
+      const position = positionsByStatus[task.status];
+
+      positionsByStatus[task.status] += 1;
+
+      return {
+        ...task,
+        position,
+      };
+    });
+
+    setTasks(updatedTasks);
+
+    await updateTaskPositions(
+      updatedTasks.map(({ id, status, position }) => ({
+        id,
+        status,
+        position,
+      })),
+    );
+
     clearInsertionIndicator();
   };
 

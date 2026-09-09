@@ -1,10 +1,18 @@
-import type { Task, TaskFilters, TaskSort, TaskStatus } from '@/entities/task';
+import type {
+  CreateTaskData,
+  Task,
+  TaskFilters,
+  TaskSort,
+  TaskStatus,
+} from '@/entities/task';
 import { getDueDateStatus } from '@/entities/task/lib/dueDateUtils';
 
-export const createTask = (data: Omit<Task, 'id'>): Task => {
+export const createTask = (data: CreateTaskData): Task => {
   return {
     id: crypto.randomUUID(),
     ...data,
+    createdAt: Date.now(),
+    position: 0,
   };
 };
 
