@@ -8,5 +8,6 @@ export const initialTasks: Task[] = [
     priority: 'high',
     status: 'todo',
     createdAt: Date.now(),
+    position: 0,
   },
 ];

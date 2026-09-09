@@ -16,6 +16,7 @@ const tasks: Task[] = [
     description: 'First description',
     priority: 'low',
     status: 'todo',
+    position: 0,
   },
   {
     id: '2',
@@ -23,6 +24,7 @@ const tasks: Task[] = [
     description: 'Second description',
     priority: 'medium',
     status: 'in-progress',
+    position: 0,
   },
 ];
 
@@ -35,6 +37,7 @@ describe('createTask', () => {
       priority: 'high' as const,
       status: 'todo' as const,
       createdAt: 1786795200000,
+      position: 0,
     };
 
     const result = createTask(data);
@@ -87,6 +90,7 @@ describe('updateTask', () => {
       description: 'First description',
       priority: 'high',
       status: 'todo',
+      position: 0,
     });
   });
 
@@ -113,18 +117,21 @@ describe('moveTask', () => {
         title: 'First task',
         priority: 'low',
         status: 'todo',
+        position: 0,
       },
       {
         id: '2',
         title: 'Second task',
         priority: 'medium',
         status: 'todo',
+        position: 1,
       },
       {
         id: '3',
         title: 'Third task',
         priority: 'high',
         status: 'todo',
+        position: 2,
       },
     ];
 
@@ -142,18 +149,21 @@ describe('moveTask', () => {
         title: 'Todo task',
         priority: 'low',
         status: 'todo',
+        position: 0,
       },
       {
         id: '2',
         title: 'In progress task',
         priority: 'medium',
         status: 'in-progress',
+        position: 0,
       },
       {
         id: '3',
         title: 'Another in progress task',
         priority: 'high',
         status: 'in-progress',
+        position: 1,
       },
     ];
 
@@ -199,6 +209,7 @@ describe('filterTasks', () => {
       priority: 'high',
       status: 'todo',
       dueDate: toTimestamp(today),
+      position: 0,
     },
     {
       id: '2',
@@ -207,6 +218,7 @@ describe('filterTasks', () => {
       priority: 'medium',
       status: 'in-progress',
       dueDate: toTimestamp(tomorrow),
+      position: 0,
     },
     {
       id: '3',
@@ -214,6 +226,7 @@ describe('filterTasks', () => {
       description: 'Add Vitest tests',
       priority: 'low',
       status: 'done',
+      position: 0,
     },
     {
       id: '4',
@@ -222,6 +235,7 @@ describe('filterTasks', () => {
       priority: 'high',
       status: 'todo',
       dueDate: toTimestamp(yesterday),
+      position: 1,
     },
     {
       id: '5',
@@ -230,6 +244,7 @@ describe('filterTasks', () => {
       priority: 'medium',
       status: 'todo',
       dueDate: toTimestamp(upcoming),
+      position: 2,
     },
   ];
 
@@ -396,6 +411,7 @@ describe('sortTasks', () => {
       priority: 'low',
       status: 'todo',
       dueDate: 1000,
+      position: 0,
     },
     {
       id: '2',
@@ -403,6 +419,7 @@ describe('sortTasks', () => {
       priority: 'high',
       status: 'todo',
       dueDate: 3000,
+      position: 1,
     },
     {
       id: '3',
@@ -410,12 +427,14 @@ describe('sortTasks', () => {
       priority: 'medium',
       status: 'todo',
       dueDate: 2000,
+      position: 2,
     },
     {
       id: '4',
       title: 'Task 4',
       priority: 'high',
       status: 'todo',
+      position: 3,
     },
   ];
 
@@ -444,12 +463,14 @@ describe('sortTasks', () => {
         title: 'Task 1',
         priority: 'low',
         status: 'todo',
+        position: 0,
       },
       {
         id: '2',
         title: 'Task 2',
         priority: 'high',
         status: 'todo',
+        position: 1,
       },
     ];
 
@@ -465,12 +486,14 @@ describe('sortTasks', () => {
         title: 'Task 1',
         priority: 'low',
         status: 'todo',
+        position: 0,
       },
       {
         id: '2',
         title: 'Task 2',
         priority: 'high',
         status: 'todo',
+        position: 1,
       },
     ];
 
