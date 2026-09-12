@@ -28,6 +28,35 @@ export const createTask = async (data: CreateTaskData): Promise<Task> => {
   return response.json();
 };
 
+export const updateTask = async (
+  taskId: Task['id'],
+  data: Partial<Task>,
+): Promise<Task> => {
+  const response = await fetch(`/api/tasks/${taskId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update task');
+  }
+
+  return response.json();
+};
+
+export const deleteTask = async (taskId: Task['id']): Promise<void> => {
+  const response = await fetch(`/api/tasks/${taskId}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete task');
+  }
+};
+
 export const updateTaskPositions = async (
   tasks: UpdateTaskPosition[],
 ): Promise<void> => {

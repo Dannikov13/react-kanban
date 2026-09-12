@@ -165,7 +165,7 @@ const TaskCard = ({
       <article
         ref={setNodeRef}
         style={style}
-        className={`group relative min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-800 ${
+        className={`group relative min-w-0 max-w-full overflow-visible rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-800 ${
           isDragging ? 'border-blue-400 opacity-30 shadow-lg' : ''
         }`}
       >
@@ -242,7 +242,7 @@ const TaskCard = ({
                   description: e.target.value,
                 })
               }
-              className="min-h-24 w-full min-w-0 max-w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
+              className="min-h-24 w-full min-w-0 resize-none rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
             />
           </div>
 
