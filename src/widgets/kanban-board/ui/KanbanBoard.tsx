@@ -174,7 +174,7 @@ const KanbanBoard = () => {
       return;
     }
 
-    const newTasks = moveTask(tasks, activeId, overId);
+    const newTasks = moveTask(tasks, activeId, overId, insertionPosition);
 
     const positionsByStatus: Record<TaskStatus, number> = {
       todo: 0,
