@@ -118,6 +118,7 @@ export const moveTask = (
   tasks: Task[],
   taskId: Task['id'],
   overId: string,
+  insertionPosition?: 'before' | 'after' | null,
 ): Task[] => {
   const activeTask = tasks.find((task) => task.id === taskId);
 
@@ -156,11 +157,14 @@ export const moveTask = (
     );
 
     const oldIndex = columnTasks.findIndex((task) => task.id === taskId);
-    const newIndex = columnTasks.findIndex((task) => task.id === overId);
 
     const reorderedTasks = [...columnTasks];
 
     const [movedTask] = reorderedTasks.splice(oldIndex, 1);
+
+    const overIndex = reorderedTasks.findIndex((task) => task.id === overId);
+
+    const newIndex = insertionPosition === 'after' ? overIndex + 1 : overIndex;
 
     reorderedTasks.splice(newIndex, 0, movedTask);
 
