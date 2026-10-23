@@ -38,3 +38,19 @@ jobs:
 
       - name: Build project
         run: npm run build
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: server
+
+      - name: Typecheck backend
+        run: npm run typecheck
+        working-directory: server
+
+      - name: Test backend services
+        run: npm test
+        working-directory: server
+
+      - name: Build backend
+        run: npm run build
+        working-directory: server

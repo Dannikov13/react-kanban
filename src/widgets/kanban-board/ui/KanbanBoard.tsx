@@ -61,7 +61,14 @@ const KanbanBoard = () => {
   }, [loadTasks]);
 
   const handleCreateTask = async (data: CreateTaskData) => {
-    await createTask(data);
+    setError(null);
+
+    try {
+      await createTask(data);
+    } catch (error) {
+      setError('Failed to create task. Please try again.');
+      throw error;
+    }
   };
 
   const handleDeleteTask = (taskId: Task['id']) => {
@@ -73,9 +80,14 @@ const KanbanBoard = () => {
       return;
     }
 
-    await deleteTask(taskIdToDelete);
+    setError(null);
 
-    setTaskIdToDelete(null);
+    try {
+      await deleteTask(taskIdToDelete);
+      setTaskIdToDelete(null);
+    } catch {
+      setError('Failed to delete task. Please try again.');
+    }
   };
 
   const handleCancelDelete = () => {
@@ -86,7 +98,14 @@ const KanbanBoard = () => {
     taskId: Task['id'],
     updatedData: Partial<Task>,
   ) => {
-    await updateTask(taskId, updatedData);
+    setError(null);
+
+    try {
+      await updateTask(taskId, updatedData);
+    } catch (error) {
+      setError('Failed to update task. Please try again.');
+      throw error;
+    }
   };
 
   const handleDragStart = (event: DragStartEvent) => {

@@ -1,4 +1,4 @@
-import { TaskRepository } from '../repositories/taskRepository.js';
+import type { TaskRepository } from '../repositories/taskRepository.js';
 import { TASK_PRIORITIES, TASK_STATUSES } from '../constants/task.js';
 import { CreateTaskData, Task, UpdateTaskPositionData } from '../types/task.js';
 import { AppError } from '../errors/AppError.js';

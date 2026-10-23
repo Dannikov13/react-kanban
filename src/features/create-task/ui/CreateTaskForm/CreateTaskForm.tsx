@@ -4,7 +4,7 @@ import DateTimePicker from '@/shared/ui/DateTimePicker/DateTimePicker';
 import Select from '@/shared/ui/Select/Select';
 
 interface CreateTaskFormProps {
-  onCreateTask: (data: CreateTaskData) => void;
+  onCreateTask: (data: CreateTaskData) => Promise<void>;
 }
 
 const INITIAL_FORM_DATA: CreateTaskData = {
@@ -18,11 +18,12 @@ const INITIAL_FORM_DATA: CreateTaskData = {
 const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
   const [formData, setFormData] = useState<CreateTaskData>(INITIAL_FORM_DATA);
   const [titleTouched, setTitleTouched] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isTitleEmpty = formData.title.trim().length === 0;
   const showTitleError = titleTouched && isTitleEmpty;
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setTitleTouched(true);
@@ -31,13 +32,21 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
       return;
     }
 
-    onCreateTask({
-      ...formData,
-      title: formData.title.trim(),
-    });
+    setIsSubmitting(true);
 
-    setFormData(INITIAL_FORM_DATA);
-    setTitleTouched(false);
+    try {
+      await onCreateTask({
+        ...formData,
+        title: formData.title.trim(),
+      });
+
+      setFormData(INITIAL_FORM_DATA);
+      setTitleTouched(false);
+    } catch {
+      // The board displays the request error; keep the user's form data.
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field: keyof CreateTaskData, value: string) => {
@@ -62,7 +71,10 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
         </p>
       </div>
 
-      <div className="grid min-w-0 max-w-full gap-4">
+      <fieldset
+        disabled={isSubmitting}
+        className="grid min-w-0 max-w-full gap-4"
+      >
         {/* Title */}
         <div className="flex min-w-0 max-w-full flex-col gap-1.5">
           <label
@@ -156,16 +168,16 @@ const CreateTaskForm = ({ onCreateTask }: CreateTaskFormProps) => {
             </div>
           </div>
         </div>
-      </div>
+      </fieldset>
 
       {/* Actions */}
       <div className="mt-6 flex min-w-0 max-w-full justify-end border-t border-slate-100 pt-5 dark:border-slate-700">
         <button
           type="submit"
-          disabled={isTitleEmpty}
+          disabled={isTitleEmpty || isSubmitting}
           className="max-w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:bg-slate-400 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200 dark:disabled:bg-slate-600 dark:disabled:text-slate-400"
         >
-          Create Task
+          {isSubmitting ? 'Creating…' : 'Create Task'}
         </button>
       </div>
     </form>

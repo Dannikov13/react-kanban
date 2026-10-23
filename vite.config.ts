@@ -37,6 +37,7 @@ export default defineConfig({
       '**/coverage/**',
       '**/test-results/**',
       '**/e2e/**',
+      '**/server/**',
     ],
   },
 });
