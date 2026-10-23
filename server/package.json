@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "db:setup": "tsx src/create-tables.ts",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "keywords": [],
   "author": "",

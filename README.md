@@ -1,138 +1,105 @@
 # Kanban Board
 
-A modern Kanban board application built with React and TypeScript, focused on clean UI, responsive UX, task management, and automated testing.
+A full-stack Kanban board built with React, TypeScript, Express, and PostgreSQL. The project demonstrates task management, drag-and-drop ordering, client/server state synchronization, and automated checks.
 
 **[Live Demo](https://dannikov-react-kanban.netlify.app)**
 
 ## Features
 
 - Create, edit, and delete tasks
-- Task status management
-- Task priority management
-- Drag and drop with visual drop indicators
-- Task reordering
+- Move and reorder tasks with drag and drop; positions are saved on the server
 - Search by title and description
-- Filter by status, priority, and due date
-- Sort tasks by priority
-- Due date and time management
-- Custom date & time picker
-- Light / Dark / System theme
-- Responsive layout
-- Custom delete confirmation dialog
-- Form validation and accessibility improvements
-- LocalStorage persistence
+- Filter by status, priority, and due date; sort by priority
+- Choose a due date and time
+- Light, dark, and system theme
+- Responsive layout, form validation, and a delete confirmation dialog
+- Persist tasks in PostgreSQL through the Express API
 
-## Tech Stack
+## Tech stack
 
-- React 19
-- TypeScript
-- Vite
+- React 19, TypeScript, and Vite
+- Zustand for client-side task state
+- Express 5 and PostgreSQL for the API and persistence
+- dnd-kit for drag and drop
 - Tailwind CSS
-- dnd-kit
-- Temporal API
-- Vitest
-- Testing Library
-- Playwright
-- ESLint
-- Prettier
-- Husky
-- GitHub Actions
-
-## Testing
-
-The project includes unit, integration, and end-to-end testing.
-
-### Vitest
-
-- Task utilities
-- Date and due date utilities
-- LocalStorage hook
-
-**45 tests passing**
-
-### Playwright
-
-End-to-end tests cover:
-
-- Task creation
-- Form validation
-- Task editing
-- Task deletion
-- Search
-- Filtering
-- Sorting
+- Vitest and Testing Library for unit tests
+- Playwright for end-to-end tests
+- ESLint, Prettier, Husky, and GitHub Actions
 
 ## Architecture
 
-The project follows an FSD Lite architecture with a clear separation between:
+The frontend uses a lightweight Feature-Sliced Design structure:
 
-- `entities` — domain models and task-related logic
-- `features` — user-facing functionality
-- `widgets` — complex UI blocks
-- `shared` — reusable UI components and utilities
-- `app` — application setup and global styles
+- `app` — application entry point and global styles
+- `widgets` — the Kanban board and columns
+- `features` — user actions such as creating and filtering tasks
+- `entities` — task types, state, utilities, and task cards
+- `shared` — reusable UI, hooks, and API functions
 
-## CI/CD
+The backend separates HTTP routes and controllers from task validation and database access:
 
-GitHub Actions automatically runs quality checks for pull requests, including:
-
-- ESLint
-- Prettier
-- TypeScript type checking
-- Production build
-- Vitest
-- Playwright E2E tests
-
-The application is deployed to Netlify.
-
-## Getting Started
-
-### Install dependencies
-
-```bash
-npm install
+```text
+React UI → Zustand store → API functions → Express routes/controllers
+         → TaskService → TaskRepository → PostgreSQL
 ```
 
-### Start the development server
+## Requirements
 
-```bash
-npm run dev
-```
+- Node.js 26 (the CI workflow uses Node.js 26)
+- PostgreSQL
 
-### Run linting
+## Run locally
+
+1. Install frontend dependencies from the repository root:
+
+   ```bash
+   npm ci
+   ```
+
+2. Create a PostgreSQL user and database. For example, in `psql`:
+
+   ```sql
+   CREATE ROLE kanban LOGIN PASSWORD 'choose-a-local-password';
+   CREATE DATABASE kanban OWNER kanban;
+   ```
+
+   Copy `server/.env.example` to `server/.env` and set `DATABASE_URL` to match your local database credentials.
+
+3. Install backend dependencies and create the tasks table:
+
+   ```bash
+   cd server
+   npm ci
+   npm run db:setup
+   ```
+
+4. Start the API in the `server` directory:
+
+   ```bash
+   npm run dev
+   ```
+
+5. In a second terminal, from the repository root, start the frontend:
+
+   ```bash
+   npm run dev
+   ```
+
+The Vite development server forwards `/api` requests to `http://localhost:3000`.
+
+## Checks
+
+Run these from the repository root:
 
 ```bash
 npm run lint
-```
-
-### Check formatting
-
-```bash
 npm run format:check
-```
-
-### Run TypeScript checks and build
-
-```bash
+npm run test -- --run
 npm run build
 ```
 
-### Run unit tests
-
-```bash
-npx vitest run
-```
-
-### Run E2E tests
-
-```bash
-npx playwright test
-```
-
-## Persistence
-
-Tasks are stored in the browser's `localStorage`, so data persists between page reloads on the same browser and device.
+The frontend Vitest suite covers task utilities, date utilities, and the local-storage hook. The backend has isolated service tests that do not require a database. Playwright end-to-end specs are in `e2e/`; they require the API and PostgreSQL to be running. The GitHub Actions workflow runs frontend and backend checks but does not run those E2E specs yet.
 
 ## License
 
-This project is created for portfolio and educational purposes.
+This project is for portfolio and educational purposes.
