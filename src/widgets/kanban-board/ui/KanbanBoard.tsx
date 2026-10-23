@@ -2,7 +2,7 @@ import CreateTaskForm from '@/features/create-task/ui/CreateTaskForm';
 import TaskFilter from '@/features/task-filter/ui/TaskFilter';
 import ConfirmDialog from '@/shared/ui/ConfirmDialog/ConfirmDialog';
 import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
-
+import { useTaskStore } from '@/entities/task/model/taskStore';
 import {
   DndContext,
   type DragEndEvent,
@@ -10,9 +10,7 @@ import {
   DragOverlay,
   type DragStartEvent,
 } from '@dnd-kit/core';
-
 import { useEffect, useState } from 'react';
-
 import type {
   CreateTaskData,
   DueDateFilter,
@@ -21,25 +19,20 @@ import type {
   TaskSort,
   TaskStatus,
 } from '@/entities/task';
-
 import {
   filterTasks,
   moveTask,
   sortTasks,
 } from '@/entities/task/lib/taskUtils';
-
 import { TaskCardDragOverlay } from '@/entities/task/ui/TaskCard/TaskCard';
 
-import {
-  createTask,
-  deleteTask as deleteTaskApi,
-  getTasks,
-  updateTask as updateTaskApi,
-  updateTaskPositions,
-} from '@/shared/api/taskApi.ts';
-
 const KanbanBoard = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const tasks = useTaskStore((state) => state.tasks);
+  const loadTasks = useTaskStore((state) => state.loadTasks);
+  const deleteTask = useTaskStore((state) => state.deleteTask);
+  const updateTask = useTaskStore((state) => state.updateTask);
+  const createTask = useTaskStore((state) => state.createTask);
+  const saveTaskPositions = useTaskStore((state) => state.saveTaskPositions);
   const [filters, setFilters] = useState<TaskFilters>({
     search: '',
     status: 'all',
@@ -56,23 +49,19 @@ const KanbanBoard = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadTasks = async () => {
+    const load = async () => {
       try {
-        const tasks = await getTasks();
-
-        setTasks(tasks);
+        await loadTasks();
       } catch {
         setError('Failed to load tasks.');
       }
     };
 
-    loadTasks();
-  }, []);
+    void load();
+  }, [loadTasks]);
 
   const handleCreateTask = async (data: CreateTaskData) => {
-    const newTask = await createTask(data);
-
-    setTasks((prevTasks) => [...prevTasks, newTask]);
+    await createTask(data);
   };
 
   const handleDeleteTask = (taskId: Task['id']) => {
@@ -84,11 +73,7 @@ const KanbanBoard = () => {
       return;
     }
 
-    await deleteTaskApi(taskIdToDelete);
-
-    setTasks((prevTasks) =>
-      prevTasks.filter((task) => task.id !== taskIdToDelete),
-    );
+    await deleteTask(taskIdToDelete);
 
     setTaskIdToDelete(null);
   };
@@ -101,11 +86,7 @@ const KanbanBoard = () => {
     taskId: Task['id'],
     updatedData: Partial<Task>,
   ) => {
-    const updatedTask = await updateTaskApi(taskId, updatedData);
-
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => (task.id === taskId ? updatedTask : task)),
-    );
+    await updateTask(taskId, updatedData);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -193,15 +174,11 @@ const KanbanBoard = () => {
       };
     });
 
-    setTasks(updatedTasks);
-
-    await updateTaskPositions(
-      updatedTasks.map(({ id, status, position }) => ({
-        id,
-        status,
-        position,
-      })),
-    );
+    try {
+      await saveTaskPositions(updatedTasks);
+    } catch {
+      setError('Failed to save task positions. Please try again.');
+    }
   };
 
   const filteredTasks = filterTasks(tasks, filters);
