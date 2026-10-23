@@ -36,8 +36,6 @@ describe('createTask', () => {
       dueDate: 1786795200000,
       priority: 'high' as const,
       status: 'todo' as const,
-      createdAt: 1786795200000,
-      position: 0,
     };
 
     const result = createTask(data);
@@ -45,6 +43,8 @@ describe('createTask', () => {
     expect(result).toEqual({
       ...data,
       id: expect.any(String),
+      createdAt: expect.any(Number),
+      position: 0,
     });
   });
 
@@ -135,7 +135,7 @@ describe('moveTask', () => {
       },
     ];
 
-    const result = moveTask(tasksForReorder, '1', '3');
+    const result = moveTask(tasksForReorder, '1', '3', 'after');
 
     const todoTasks = result.filter((task) => task.status === 'todo');
 
