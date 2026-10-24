@@ -2,7 +2,7 @@
 
 A full-stack Kanban board built with React, TypeScript, Express, and PostgreSQL. The project demonstrates task management, drag-and-drop ordering, client/server state synchronization, and automated checks.
 
-**[Live Demo](https://dannikov-react-kanban.netlify.app)**
+**[Live Frontend Demo](https://dannikov-react-kanban.netlify.app)**
 
 ## Features
 
@@ -86,6 +86,32 @@ React UI → Zustand store → API functions → Express routes/controllers
    ```
 
 The Vite development server forwards `/api` requests to `http://localhost:3000`.
+
+## Deploying the demo
+
+The frontend is hosted on Netlify. The API can be deployed to Render and PostgreSQL hosted on Neon. This setup uses free tiers suitable for a portfolio demo; it is not intended for production workloads.
+
+1. Create a PostgreSQL project on Neon and copy its pooled connection string. Keep it private.
+2. Connect this GitHub repository to Render as a Blueprint and deploy `render.yaml` from the `feat/backend` branch. Set `DATABASE_URL` to the Neon connection string in Render's environment settings.
+3. In Neon's SQL Editor, create the `tasks` table once:
+
+   ```sql
+   CREATE TABLE IF NOT EXISTS tasks (
+     id TEXT PRIMARY KEY,
+     title TEXT NOT NULL,
+     description TEXT,
+     due_date BIGINT,
+     priority TEXT NOT NULL,
+     status TEXT NOT NULL,
+     created_at BIGINT,
+     position INTEGER NOT NULL
+   );
+   ```
+
+4. Copy the API service URL from Render. In Netlify, set `VITE_API_BASE_URL` to that URL (no trailing slash and no `/api` suffix), then redeploy the frontend.
+5. Check that `<API URL>/api/health` returns `{"status":"ok"}` and try creating a task in the live demo.
+
+Render's free API service sleeps after 15 minutes without traffic, so its first request after sleep can take about a minute. Neon currently offers 1 GB of database storage per free project. Review both providers' current limits before relying on this for anything important. Never commit production credentials; configure them in provider settings.
 
 ## Checks
 
