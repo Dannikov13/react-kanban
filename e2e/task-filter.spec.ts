@@ -1,41 +1,41 @@
 import { expect, test } from '@playwright/test';
+import { createTask } from './helpers';
 
 test('user can search tasks by title', async ({ page }) => {
-  await page.goto('/');
-
-  await page.getByLabel('Search tasks').fill('Setup project');
+  await createTask(page, 'Search title task');
+  await page.getByLabel('Search tasks').fill('Search title task');
 
   await expect(
-    page.getByRole('heading', { name: 'Setup project' }),
+    page.getByRole('heading', { name: 'Search title task' }),
   ).toBeVisible();
 });
 
 test('user can search tasks by description', async ({ page }) => {
-  await page.goto('/');
-
-  await page.getByLabel('Search tasks').fill('Configure project');
+  await createTask(
+    page,
+    'Search description task',
+    'Unique searchable description',
+  );
+  await page.getByLabel('Search tasks').fill('Unique searchable description');
 
   await expect(
-    page.getByRole('heading', { name: 'Setup project' }),
+    page.getByRole('heading', { name: 'Search description task' }),
   ).toBeVisible();
 });
 
 test('user can clear the search', async ({ page }) => {
-  await page.goto('/');
+  const taskName = 'Clear search task';
+  await createTask(page, taskName);
 
   const searchInput = page.getByLabel('Search tasks');
 
-  await searchInput.fill('Setup project');
+  await searchInput.fill(taskName);
 
-  await expect(
-    page.getByRole('heading', { name: 'Setup project' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: taskName })).toBeVisible();
 
   await page.getByRole('button', { name: 'Clear search' }).click();
 
-  await expect(
-    page.getByRole('heading', { name: 'Setup project' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: taskName })).toBeVisible();
 });
 
 test('user can filter tasks by status', async ({ page }) => {

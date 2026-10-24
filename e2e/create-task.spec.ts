@@ -55,7 +55,9 @@ test('user can delete a task after confirming', async ({ page }) => {
     dialog.getByRole('heading', { name: 'Delete task?' }),
   ).toBeVisible();
 
-  await expect(dialog.getByText('This action cannot be undone.')).toBeVisible();
+  await expect(
+    dialog.getByText('Are you sure you want to delete this task?'),
+  ).toBeVisible();
 
   await dialog.getByRole('button', { name: 'Delete' }).click();
 

@@ -1,4 +1,5 @@
 import path from 'path';
+import process from 'node:process';
 
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -15,7 +16,7 @@ export default defineConfig({
 
   server: {
     proxy: {
-      '/api': 'http://localhost:3000',
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
     },
   },
 
