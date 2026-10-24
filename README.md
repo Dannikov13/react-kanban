@@ -9,7 +9,7 @@ A full-stack Kanban board built with React, TypeScript, Express, and PostgreSQL.
 - Create, edit, and delete tasks
 - Move and reorder tasks with drag and drop; positions are saved on the server
 - Search by title and description
-- Filter by status, priority, and due date; sort by priority
+- Filter by status, priority, and due date; sort by due date or priority
 - Choose a due date and time
 - Light, dark, and system theme
 - Responsive layout, form validation, and a delete confirmation dialog
@@ -92,7 +92,7 @@ The Vite development server forwards `/api` requests to `http://localhost:3000`.
 The frontend is hosted on Netlify. The API can be deployed to Render and PostgreSQL hosted on Neon. This setup uses free tiers suitable for a portfolio demo; it is not intended for production workloads.
 
 1. Create a PostgreSQL project on Neon and copy its pooled connection string. Keep it private.
-2. Connect this GitHub repository to Render as a Blueprint and deploy `render.yaml` from the `feat/backend` branch. Set `DATABASE_URL` to the Neon connection string in Render's environment settings.
+2. Connect this GitHub repository to Render as a Blueprint and deploy `render.yaml` from the `main` branch. Set `DATABASE_URL` to the Neon connection string in Render's environment settings.
 3. In Neon's SQL Editor, create the `tasks` table once:
 
    ```sql

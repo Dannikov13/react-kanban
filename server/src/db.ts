@@ -17,3 +17,7 @@ if (!connectionString) {
 }
 
 export const pool = new Pool({ connectionString });
+
+pool.on('error', (error: Error) => {
+  console.error('Unexpected error from an idle PostgreSQL client', error);
+});
