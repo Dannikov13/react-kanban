@@ -1,4 +1,5 @@
 import path from 'path';
+import process from 'node:process';
 
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -10,6 +11,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+
+  server: {
+    proxy: {
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
     },
   },
 
@@ -31,6 +38,7 @@ export default defineConfig({
       '**/coverage/**',
       '**/test-results/**',
       '**/e2e/**',
+      '**/server/**',
     ],
   },
 });
