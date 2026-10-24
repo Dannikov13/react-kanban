@@ -1,11 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { createTask } from './helpers';
 
 test('user can edit a task', async ({ page }) => {
-  await page.goto('/');
-
-  const task = page.getByRole('heading', { name: 'Setup project' });
-
-  await expect(task).toBeVisible();
+  const task = await createTask(page, 'Setup project', 'Configure project');
 
   const taskCard = task.locator('xpath=ancestor::article');
 
