@@ -6,7 +6,7 @@ import globals from 'globals';
 import { globalIgnores } from 'eslint/config';
 
 export default [
-  globalIgnores(['dist', 'coverage']),
+  globalIgnores(['dist', '**/dist/**', 'coverage']),
 
   js.configs.recommended,
 
@@ -33,6 +33,13 @@ export default [
 
     rules: {
       'react/react-in-jsx-scope': 'off',
+
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 

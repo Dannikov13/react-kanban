@@ -15,7 +15,10 @@ interface TaskColumnProps {
   insertionTargetId: string | null;
   insertionPosition: 'before' | 'after' | null;
   onDeleteTask: (taskId: Task['id']) => void;
-  onUpdateTask: (taskId: Task['id'], updatedData: Partial<Task>) => void;
+  onUpdateTask: (
+    taskId: Task['id'],
+    updatedData: Partial<Task>,
+  ) => Promise<void>;
 }
 
 const TaskColumn = ({

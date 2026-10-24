@@ -11,7 +11,10 @@ import {
 interface TaskCardProps {
   task: Task;
   onDeleteTask: (taskId: Task['id']) => void;
-  onUpdateTask: (taskId: Task['id'], updatedData: Partial<Task>) => void;
+  onUpdateTask: (
+    taskId: Task['id'],
+    updatedData: Partial<Task>,
+  ) => Promise<void>;
   insertionPosition: 'before' | 'after' | null;
 }
 
@@ -115,6 +118,7 @@ const TaskCard = ({
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     title: task.title,
@@ -135,17 +139,25 @@ const TaskCard = ({
     transition,
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isTitleEmpty) {
       return;
     }
 
-    onUpdateTask(task.id, {
-      ...formData,
-      title: formData.title.trim(),
-    });
+    setIsSaving(true);
 
-    setIsEditing(false);
+    try {
+      await onUpdateTask(task.id, {
+        ...formData,
+        title: formData.title.trim(),
+      });
+
+      setIsEditing(false);
+    } catch {
+      // The board displays the request error; keep the edit form open.
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -165,7 +177,7 @@ const TaskCard = ({
       <article
         ref={setNodeRef}
         style={style}
-        className={`group relative min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-800 ${
+        className={`group relative min-w-0 max-w-full overflow-visible rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-800 ${
           isDragging ? 'border-blue-400 opacity-30 shadow-lg' : ''
         }`}
       >
@@ -190,141 +202,143 @@ const TaskCard = ({
           className="min-w-0 flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            handleSave();
+            void handleSave();
           }}
         >
-          <div className="flex min-w-0 flex-col gap-2">
-            <label
-              htmlFor={`edit-title-${task.id}`}
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Title
-            </label>
+          <fieldset disabled={isSaving} className="flex min-w-0 flex-col gap-4">
+            <div className="flex min-w-0 flex-col gap-2">
+              <label
+                htmlFor={`edit-title-${task.id}`}
+                className="text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                Title
+              </label>
 
-            <input
-              id={`edit-title-${task.id}`}
-              type="text"
-              value={formData.title}
-              onChange={(e) =>
+              <input
+                id={`edit-title-${task.id}`}
+                type="text"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    title: e.target.value,
+                  })
+                }
+                className={`w-full min-w-0 max-w-full rounded-xl border bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all dark:bg-slate-900 dark:text-slate-200 ${
+                  isTitleEmpty
+                    ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-red-500 dark:focus:ring-red-900/40'
+                    : 'border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40'
+                }`}
+              />
+
+              {isTitleEmpty && (
+                <p className="text-sm text-red-500 dark:text-red-400">
+                  Title is required.
+                </p>
+              )}
+            </div>
+
+            <div className="flex min-w-0 flex-col gap-2">
+              <label
+                htmlFor={`edit-description-${task.id}`}
+                className="text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                Description
+              </label>
+
+              <textarea
+                id={`edit-description-${task.id}`}
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    description: e.target.value,
+                  })
+                }
+                className="min-h-24 w-full min-w-0 resize-none rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
+              />
+            </div>
+
+            <DateTimePicker
+              value={formData.dueDate}
+              onChange={(value) =>
                 setFormData({
                   ...formData,
-                  title: e.target.value,
+                  dueDate: value,
                 })
               }
-              className={`w-full min-w-0 max-w-full rounded-xl border bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all dark:bg-slate-900 dark:text-slate-200 ${
-                isTitleEmpty
-                  ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:border-red-500 dark:focus:ring-red-900/40'
-                  : 'border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40'
-              }`}
             />
 
-            {isTitleEmpty && (
-              <p className="text-sm text-red-500 dark:text-red-400">
-                Title is required.
-              </p>
-            )}
-          </div>
+            <div className="flex min-w-0 flex-col gap-2">
+              <label
+                htmlFor={`edit-priority-${task.id}`}
+                className="text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                Priority
+              </label>
 
-          <div className="flex min-w-0 flex-col gap-2">
-            <label
-              htmlFor={`edit-description-${task.id}`}
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Description
-            </label>
+              <select
+                id={`edit-priority-${task.id}`}
+                value={formData.priority}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    priority: e.target.value as Task['priority'],
+                  })
+                }
+                disabled={isDragging}
+                className="w-full min-w-0 max-w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
 
-            <textarea
-              id={`edit-description-${task.id}`}
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  description: e.target.value,
-                })
-              }
-              className="min-h-24 w-full min-w-0 max-w-full resize-none rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-800 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
-            />
-          </div>
+            <div className="flex min-w-0 flex-col gap-2">
+              <label
+                htmlFor={`edit-status-${task.id}`}
+                className="text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                Status
+              </label>
 
-          <DateTimePicker
-            value={formData.dueDate}
-            onChange={(value) =>
-              setFormData({
-                ...formData,
-                dueDate: value,
-              })
-            }
-          />
+              <select
+                id={`edit-status-${task.id}`}
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    status: e.target.value as TaskStatus,
+                  })
+                }
+                disabled={isDragging}
+                className="w-full min-w-0 max-w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
+              >
+                <option value="todo">Todo</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
 
-          <div className="flex min-w-0 flex-col gap-2">
-            <label
-              htmlFor={`edit-priority-${task.id}`}
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Priority
-            </label>
+            <div className="mt-2 flex min-w-0 flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-700">
+              <button
+                type="submit"
+                disabled={isTitleEmpty || isSaving}
+                className="max-w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400 dark:hover:bg-blue-500"
+              >
+                {isSaving ? 'Saving…' : 'Save changes'}
+              </button>
 
-            <select
-              id={`edit-priority-${task.id}`}
-              value={formData.priority}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  priority: e.target.value as Task['priority'],
-                })
-              }
-              disabled={isDragging}
-              className="w-full min-w-0 max-w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-
-          <div className="flex min-w-0 flex-col gap-2">
-            <label
-              htmlFor={`edit-status-${task.id}`}
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Status
-            </label>
-
-            <select
-              id={`edit-status-${task.id}`}
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as TaskStatus,
-                })
-              }
-              disabled={isDragging}
-              className="w-full min-w-0 max-w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition-all hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-900/40"
-            >
-              <option value="todo">Todo</option>
-              <option value="in-progress">In Progress</option>
-              <option value="done">Done</option>
-            </select>
-          </div>
-
-          <div className="mt-2 flex min-w-0 flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-700">
-            <button
-              type="submit"
-              disabled={isTitleEmpty}
-              className="max-w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400 dark:hover:bg-blue-500"
-            >
-              Save changes
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="max-w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            >
-              Cancel
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="max-w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </fieldset>
         </form>
       </article>
     );
