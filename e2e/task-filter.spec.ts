@@ -1,30 +1,32 @@
-import { expect, test } from '@playwright/test';
 import { createTask } from './helpers';
+import { test, expect, taskCard, uniqueTitle } from './board-fixture';
 
 test('user can search tasks by title', async ({ page }) => {
-  await createTask(page, 'Search title task');
-  await page.getByLabel('Search tasks').fill('Search title task');
+  const title = uniqueTitle('Search title task');
+  await createTask(page, title);
+  await page.getByLabel('Search tasks').fill(title);
 
   await expect(
-    page.getByRole('heading', { name: 'Search title task' }),
+    page.getByRole('heading', { name: title, exact: true }),
   ).toBeVisible();
 });
 
-test('user can search tasks by description', async ({ page }) => {
-  await createTask(
-    page,
-    'Search description task',
-    'Unique searchable description',
-  );
-  await page.getByLabel('Search tasks').fill('Unique searchable description');
+test('user can search tasks by description', async ({ page, seedTask }) => {
+  const unrelated = await seedTask();
+  const title = uniqueTitle('Search description task');
+  const description = uniqueTitle('Unique searchable description');
+  await createTask(page, title, description);
+  await expect(taskCard(page, unrelated.title)).toBeVisible();
+  await page.getByLabel('Search tasks').fill(description);
+  await expect(taskCard(page, unrelated.title)).toHaveCount(0);
 
   await expect(
-    page.getByRole('heading', { name: 'Search description task' }),
+    page.getByRole('heading', { name: title, exact: true }),
   ).toBeVisible();
 });
 
 test('user can clear the search', async ({ page }) => {
-  const taskName = 'Clear search task';
+  const taskName = uniqueTitle('Clear search task');
   await createTask(page, taskName);
 
   const searchInput = page.getByLabel('Search tasks');
@@ -41,8 +43,8 @@ test('user can clear the search', async ({ page }) => {
 test('user can filter tasks by status', async ({ page }) => {
   await page.goto('/');
 
-  const todoTask = 'Todo Playwright task';
-  const doneTask = 'Done Playwright task';
+  const todoTask = uniqueTitle('Todo Playwright task');
+  const doneTask = uniqueTitle('Done Playwright task');
 
   await page.getByLabel('Title').fill(todoTask);
   await page.getByRole('button', { name: 'Create Task' }).click();
@@ -77,8 +79,8 @@ test('user can filter tasks by status', async ({ page }) => {
 test('user can filter tasks by priority', async ({ page }) => {
   await page.goto('/');
 
-  const lowPriorityTask = 'Low priority Playwright task';
-  const highPriorityTask = 'High priority Playwright task';
+  const lowPriorityTask = uniqueTitle('Low priority Playwright task');
+  const highPriorityTask = uniqueTitle('High priority Playwright task');
 
   await page.getByLabel('Title').fill(lowPriorityTask);
   await page.getByRole('button', { name: 'Create Task' }).click();
@@ -117,8 +119,8 @@ test('user can filter tasks by priority', async ({ page }) => {
 test('user can filter tasks by due date', async ({ page }) => {
   await page.goto('/');
 
-  const noDueDateTask = 'No due date Playwright task';
-  const todayTask = 'Today Playwright task';
+  const noDueDateTask = uniqueTitle('No due date Playwright task');
+  const todayTask = uniqueTitle('Today Playwright task');
 
   await page.getByLabel('Title').fill(noDueDateTask);
   await page.getByRole('button', { name: 'Create Task' }).click();
@@ -162,9 +164,10 @@ test('user can filter tasks by due date', async ({ page }) => {
 test('user can sort tasks by priority', async ({ page }) => {
   await page.goto('/');
 
-  const lowTask = 'Low priority sort task';
-  const mediumTask = 'Medium priority sort task';
-  const highTask = 'High priority sort task';
+  const prefix = uniqueTitle('priority sort task');
+  const lowTask = `${prefix} low`;
+  const mediumTask = `${prefix} medium`;
+  const highTask = `${prefix} high`;
 
   const createForm = page.locator('form').filter({
     has: page.getByRole('heading', { name: 'Create Task' }),
@@ -210,7 +213,7 @@ test('user can sort tasks by priority', async ({ page }) => {
   await page.getByRole('button', { name: 'Create Task' }).click();
 
   // Show only the tasks created by this test.
-  await page.getByLabel('Search tasks').fill('priority sort task');
+  await page.getByLabel('Search tasks').fill(prefix);
 
   const todoColumn = page
     .getByRole('heading', { name: 'Todo' })
@@ -233,4 +236,35 @@ test('user can sort tasks by priority', async ({ page }) => {
   await expect(todoCards.nth(0)).toContainText(highTask);
   await expect(todoCards.nth(1)).toContainText(mediumTask);
   await expect(todoCards.nth(2)).toContainText(lowTask);
+});
+
+test('search excludes unrelated tasks and clearing restores them', async ({
+  page,
+  seedTask,
+}) => {
+  const matching = await seedTask();
+  const unrelated = await seedTask();
+  await page.goto('/');
+  await expect(taskCard(page, matching.title)).toBeVisible();
+  await expect(taskCard(page, unrelated.title)).toBeVisible();
+  await page.getByLabel('Search tasks').fill(matching.title.toUpperCase());
+  await expect(taskCard(page, matching.title)).toBeVisible();
+  await expect(taskCard(page, unrelated.title)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Clear search' }).click();
+  await expect(page.getByLabel('Search tasks')).toHaveValue('');
+  await expect(taskCard(page, unrelated.title)).toBeVisible();
+});
+
+test('unmatched search shows empty state and no cards', async ({
+  page,
+  seedTask,
+}) => {
+  const task = await seedTask();
+  await page.goto('/');
+  await expect(taskCard(page, task.title)).toBeVisible();
+  await page.getByLabel('Search tasks').fill(`Missing ${crypto.randomUUID()}`);
+  await expect(page.locator('article')).toHaveCount(0);
+  await expect(
+    page.getByText('No matching tasks', { exact: true }),
+  ).toHaveCount(3);
 });
