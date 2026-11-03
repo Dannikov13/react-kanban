@@ -27,6 +27,7 @@ dist-ssr
 *.sw?
 coverage/
 test-results/
+playwright-report/
 
 # Local workspace settings and private notes
 .codex/

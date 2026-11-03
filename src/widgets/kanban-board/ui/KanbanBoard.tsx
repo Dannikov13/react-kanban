@@ -5,6 +5,9 @@ import TaskColumn from '@/widgets/kanban-board/ui/TaskColumn';
 import { useTaskStore } from '@/entities/task/model/taskStore';
 import {
   DndContext,
+  pointerWithin,
+  rectIntersection,
+  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   DragOverlay,
@@ -25,6 +28,18 @@ import {
   sortTasks,
 } from '@/entities/task/lib/taskUtils';
 import { TaskCardDragOverlay } from '@/entities/task/ui/TaskCard/TaskCard';
+
+// Cards are nested inside droppable columns. Prefer the card under the pointer
+// so a drop near its bottom does not accidentally target the whole column.
+const detectBoardCollision: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  const collisions =
+    pointerCollisions.length > 0 ? pointerCollisions : rectIntersection(args);
+  const cardCollisions = collisions.filter(
+    ({ id }) => !['todo', 'in-progress', 'done'].includes(String(id)),
+  );
+  return cardCollisions.length > 0 ? cardCollisions : collisions;
+};
 
 const KanbanBoard = () => {
   const tasks = useTaskStore((state) => state.tasks);
@@ -174,7 +189,16 @@ const KanbanBoard = () => {
       return;
     }
 
-    const newTasks = moveTask(tasks, activeId, overId, insertionPosition);
+    // onDragOver only fires when the target changes. Recalculate at release
+    // so moving across the same card uses the final insertion side.
+    const activeRect = active.rect.current.translated;
+    const dropPosition = activeRect
+      ? activeRect.top + activeRect.height / 2 <
+        over.rect.top + over.rect.height / 2
+        ? 'before'
+        : 'after'
+      : insertionPosition;
+    const newTasks = moveTask(tasks, activeId, overId, dropPosition);
 
     const positionsByStatus: Record<TaskStatus, number> = {
       todo: 0,
@@ -270,8 +294,10 @@ const KanbanBoard = () => {
         />
 
         <DndContext
+          collisionDetection={detectBoardCollision}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
+          onDragMove={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
