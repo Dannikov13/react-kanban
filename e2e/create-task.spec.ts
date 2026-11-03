@@ -1,9 +1,16 @@
-import { expect, test } from '@playwright/test';
+import {
+  expect,
+  test,
+  taskCard,
+  uniqueTitle,
+  reloadTasks,
+} from './board-fixture';
 
 test('user can create a task', async ({ page }) => {
   await page.goto('/');
 
-  await page.getByLabel('Title').fill('Playwright test task');
+  const title = uniqueTitle('Playwright test task');
+  await page.getByLabel('Title').fill(title);
 
   await page
     .getByLabel('Description')
@@ -12,11 +19,11 @@ test('user can create a task', async ({ page }) => {
   await page.getByRole('button', { name: 'Create Task' }).click();
 
   await expect(
-    page.getByRole('heading', { name: 'Playwright test task' }),
+    page.getByRole('heading', { name: title, exact: true }),
   ).toBeVisible();
 
   await expect(
-    page.getByText('This task was created by Playwright.'),
+    taskCard(page, title).getByText('This task was created by Playwright.'),
   ).toBeVisible();
 });
 
@@ -36,12 +43,23 @@ test('user cannot create a task with an empty title', async ({ page }) => {
 test('user can delete a task after confirming', async ({ page }) => {
   await page.goto('/');
 
-  const taskTitle = 'Task to delete';
+  const taskTitle = `Task to delete ${crypto.randomUUID()}`;
 
   await page.getByLabel('Title').fill(taskTitle);
-  await page.getByRole('button', { name: 'Create Task' }).click();
 
-  const task = page.locator('article').filter({ hasText: taskTitle }).first();
+  const createResponsePromise = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/tasks' &&
+      response.request().method() === 'POST',
+  );
+  await page.getByRole('button', { name: 'Create Task' }).click();
+  const createResponse = await createResponsePromise;
+  expect(createResponse.ok()).toBeTruthy();
+
+  const createdTask = await createResponse.json();
+  const taskId = createdTask.id;
+
+  const task = taskCard(page, taskTitle);
 
   await expect(task).toBeVisible();
 
@@ -62,17 +80,36 @@ test('user can delete a task after confirming', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Delete' }).click();
 
   await expect(task).not.toBeVisible();
+
+  const tasks = await reloadTasks(page);
+  expect(Array.isArray(tasks)).toBe(true);
+  expect(tasks).not.toEqual(
+    expect.arrayContaining([expect.objectContaining({ id: taskId })]),
+  );
 });
 
 test('user can cancel task deletion', async ({ page }) => {
   await page.goto('/');
 
-  const taskTitle = 'Task should remain';
+  const taskTitle = `Task should remain ${crypto.randomUUID()}`;
 
   await page.getByLabel('Title').fill(taskTitle);
+
+  const createResponsePromise = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/tasks' &&
+      response.request().method() === 'POST',
+  );
+
   await page.getByRole('button', { name: 'Create Task' }).click();
 
-  const task = page.locator('article').filter({ hasText: taskTitle }).first();
+  const createResponse = await createResponsePromise;
+  expect(createResponse.ok()).toBeTruthy();
+
+  const createdTask = await createResponse.json();
+  const taskId = createdTask.id;
+
+  const task = taskCard(page, taskTitle);
 
   await expect(task).toBeVisible();
 
@@ -85,5 +122,13 @@ test('user can cancel task deletion', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Cancel' }).click();
 
   await expect(dialog).not.toBeVisible();
+  await expect(task).toBeVisible();
+
+  const tasks = await reloadTasks(page);
+  expect(Array.isArray(tasks)).toBe(true);
+  expect(tasks).toEqual(
+    expect.arrayContaining([expect.objectContaining({ id: taskId })]),
+  );
+
   await expect(task).toBeVisible();
 });

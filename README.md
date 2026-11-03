@@ -124,7 +124,50 @@ npm run test -- --run
 npm run build
 ```
 
-The frontend Vitest suite covers task utilities, date utilities, and the local-storage hook. The backend has isolated service tests that do not require a database. Playwright end-to-end specs are in `e2e/`; they require the API and PostgreSQL to be running. The GitHub Actions workflow runs frontend and backend checks but does not run those E2E specs yet.
+The frontend Vitest suite covers task utilities, date utilities, and the local-storage hook. The backend has isolated service tests that do not require a database. The GitHub Actions workflow runs frontend/backend checks and a separate Playwright job with PostgreSQL 17 and Chromium.
+
+### End-to-end tests
+
+Keep PostgreSQL running and create the separate `kanban_test` database once:
+
+```bash
+docker exec kanban-postgres psql -U kanban -d kanban -c "CREATE DATABASE kanban_test;"
+cd server
+DATABASE_URL=postgresql://kanban:kanban@localhost:5432/kanban_test npm run db:setup
+cd ..
+```
+
+Install Chromium once, then run from the project root:
+
+```bash
+npx playwright install --with-deps chromium
+npm run test:e2e:typecheck
+npm run test:e2e
+```
+
+To run every scenario twice and inspect the HTML report:
+
+```bash
+npm run test:e2e -- --repeat-each=2
+npx playwright show-report
+```
+
+Playwright starts its own backend on port 3001 and frontend on port 5174, and stops both after the run. These ports must be free; existing servers are not reused. The ordinary development servers can remain running on their usual ports.
+
+Both cleanup and the test backend use the same test database URL, defaulting to `postgresql://kanban:kanban@localhost:5432/kanban_test`. Set `E2E_DATABASE_URL` if different credentials or a host are needed; the database name must remain `kanban_test`. Ordinary `DATABASE_URL` and frontend proxy overrides do not select the E2E database or backend.
+
+Global setup verifies the connected database name and the tasks table without deleting existing rows. Each test uses unique names and removes its own tasks afterward, including tasks created through the UI. The suite uses one worker because drag-and-drop saves a snapshot of the whole board. Do not run multiple E2E suites against the same database simultaneously.
+
+### GitHub Actions
+
+Pushing any branch starts the `CI` workflow. Pull requests targeting `main` also trigger it. The workflow has two jobs:
+
+- `checks`: lint, formatting, frontend unit tests/build, backend typecheck/tests/build.
+- `Playwright E2E`: an isolated PostgreSQL service with `kanban_test`, schema setup, E2E typecheck, Chromium installation and browser tests.
+
+The test database exists only for that CI job and requires no repository secrets. The browser job starts its own application servers. `VITE_API_BASE_URL` is cleared for E2E so requests always use the local test API.
+
+After pushing, open the repository's **Actions → CI** page and select the run for your commit. Both jobs should be green. Download `playwright-results` from the run's **Artifacts** section to inspect the HTML report and any failure screenshots/traces. A manual **Run workflow** button is available once this workflow is on the default branch. CI validates the application; deployment remains a separate process.
 
 ## License
 
