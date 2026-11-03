@@ -6,7 +6,13 @@ import globals from 'globals';
 import { globalIgnores } from 'eslint/config';
 
 export default [
-  globalIgnores(['dist', '**/dist/**', 'coverage']),
+  globalIgnores([
+    'dist',
+    '**/dist/**',
+    'coverage',
+    'playwright-report',
+    'test-results',
+  ]),
 
   js.configs.recommended,
 
