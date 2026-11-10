@@ -1,6 +1,7 @@
 import express, { ErrorRequestHandler } from 'express';
 import taskRoutes from './routes/taskRoutes.js';
 import { AppError } from './errors/AppError.js';
+import { askOpenRouter } from './services/aiService.js';
 
 const app = express();
 
@@ -36,9 +37,22 @@ app.use(express.json());
 
 app.use('/api', taskRoutes);
 
+app.post('/api/ai/chat', async (req, res) => {
+  const message = req.body?.message;
+
+  if (typeof message !== 'string' || message.trim() === '') {
+    res.status(400).json({ error: 'Введите текст вопроса' });
+    return;
+  }
+
+  const answer = await askOpenRouter(message);
+
+  res.json({ answer });
+});
+
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   void _next;
-
+  console.error(error);
   if (error instanceof AppError) {
     res.status(error.statusCode).json({
       error: error.message,

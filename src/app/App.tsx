@@ -1,6 +1,7 @@
 import KanbanBoard from '@/widgets/kanban-board/ui/KanbanBoard';
 import ThemeToggle from '@/shared/ui/ThemeToggle/ThemeToggle';
 import { useTheme } from '@/shared/hooks/useTheme';
+import { AiChat } from '@/features/ai-chat/ui/AiChat';
 
 const App = () => {
   const { theme, setTheme } = useTheme();
@@ -12,6 +13,7 @@ const App = () => {
       </div>
 
       <KanbanBoard />
+      <AiChat />
     </main>
   );
 };
