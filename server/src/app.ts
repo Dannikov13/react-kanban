@@ -2,6 +2,7 @@ import express, { ErrorRequestHandler } from 'express';
 import taskRoutes from './routes/taskRoutes.js';
 import { AppError } from './errors/AppError.js';
 import { askOpenRouter } from './services/aiService.js';
+import { isChatMessage } from './types/ai.js';
 
 const app = express();
 
@@ -39,13 +40,24 @@ app.use('/api', taskRoutes);
 
 app.post('/api/ai/chat', async (req, res) => {
   const message = req.body?.message;
+  const history = req.body?.history ?? [];
 
   if (typeof message !== 'string' || message.trim() === '') {
     res.status(400).json({ error: 'Введите текст вопроса' });
     return;
   }
 
-  const answer = await askOpenRouter(message);
+  if (!Array.isArray(history)) {
+    res.status(400).json({ error: 'History must be an array' });
+    return;
+  }
+
+  if (!history.every(isChatMessage)) {
+    res.status(400).json({ error: 'Invalid chat history' });
+    return;
+  }
+
+  const answer = await askOpenRouter(message, history);
 
   res.json({ answer });
 });
