@@ -1,20 +1,33 @@
 import { useState } from 'react';
-import { sendAiMessage } from '@/shared/api/ai.ts';
+import { type ChatMessage, sendAiMessage } from '@/shared/api/ai.ts';
 
 export function AiChat() {
   const [message, setMessage] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   async function handleSend() {
+    if (isLoading || message.trim() === '') return;
+
     setError('');
+    setIsLoading(true);
+    const question = message;
 
     try {
-      const reply = await sendAiMessage(message);
-      setAnswer(reply);
+      const reply = await sendAiMessage(question, messages);
+
+      setMessages((previous) => [
+        ...previous,
+        { role: 'user', content: question },
+        { role: 'assistant', content: reply },
+      ]);
+      setMessage((current) => (current === question ? '' : current));
     } catch {
-      setError('Не удалось получить ответ. Попробуйте ещё раз.');
+      setError('Could not get a response. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -23,9 +36,9 @@ export function AiChat() {
       {isOpen && (
         <div
           id="ai-chat-panel"
-          className="mb-4 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-3xl border border-teal-200 bg-white text-slate-800 shadow-xl shadow-teal-950/15 dark:border-teal-800 dark:bg-slate-900 dark:text-slate-100"
+          className="mb-4 flex max-h-[calc(100dvh-8rem)] w-80 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-3xl border border-teal-200 bg-white text-slate-800 shadow-xl shadow-teal-950/15 dark:border-teal-800 dark:bg-slate-900 dark:text-slate-100"
         >
-          <div className="flex items-center gap-3 bg-teal-700 p-4 text-white">
+          <div className="flex shrink-0 items-center gap-3 bg-teal-700 p-4 text-white">
             <span
               aria-hidden="true"
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-3xl"
@@ -40,10 +53,21 @@ export function AiChat() {
             </div>
           </div>
 
-          <div className="p-4">
+          <div className="min-h-0 overflow-y-auto p-4">
             <textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
+              onKeyDown={(event) => {
+                if (
+                  event.key === 'Enter' &&
+                  !event.shiftKey &&
+                  !event.repeat &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault();
+                  void handleSend();
+                }
+              }}
               placeholder="Where shall we start?"
               aria-label="Message Bunny"
               rows={3}
@@ -52,10 +76,10 @@ export function AiChat() {
             <button
               type="button"
               onClick={handleSend}
-              disabled={message.trim() === ''}
+              disabled={isLoading || message.trim() === ''}
               className="mt-3 rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Send
+              {isLoading ? 'Thinking…' : 'Send'}
             </button>
 
             {error && (
@@ -67,14 +91,21 @@ export function AiChat() {
               </p>
             )}
 
-            {answer && (
-              <p
-                className="mt-3 whitespace-pre-wrap text-sm"
-                aria-live="polite"
-              >
-                {answer}
-              </p>
-            )}
+            <div className="mt-3 space-y-3" aria-live="polite">
+              {messages.map((item, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl bg-teal-50 p-3 dark:bg-slate-800"
+                >
+                  <p className="mb-1 text-xs font-semibold">
+                    {item.role === 'user' ? 'You' : 'Bunny'}
+                  </p>
+                  <p className="whitespace-pre-wrap wrap-anywhere text-sm">
+                    {item.content}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
