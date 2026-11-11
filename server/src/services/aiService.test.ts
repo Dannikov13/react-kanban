@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { TaskRepository } from '../repositories/taskRepository.js';
 import { isChatMessage } from '../types/ai.js';
-import { askOpenRouter } from './aiService.js';
 
 test('accepts chat messages but rejects instructions and malformed history entries', () => {
   assert.equal(isChatMessage({ role: 'user', content: 'Hello' }), true);
@@ -20,16 +18,24 @@ test('accepts chat messages but rejects instructions and malformed history entri
 });
 
 test('sends history in order and refreshes board context for each question', async (t) => {
+  const previousDatabase = process.env.DATABASE_URL;
   const previousKey = process.env.OPENROUTER_API_KEY;
   const previousModel = process.env.OPENROUTER_MODEL;
+  // The repository is mocked; the pool only needs a URL to initialize.
+  process.env.DATABASE_URL = 'postgresql://test:test@127.0.0.1:1/kanban_test';
   process.env.OPENROUTER_API_KEY = 'test-key';
   process.env.OPENROUTER_MODEL = 'test-model';
   t.after(() => {
+    if (previousDatabase === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousDatabase;
     if (previousKey === undefined) delete process.env.OPENROUTER_API_KEY;
     else process.env.OPENROUTER_API_KEY = previousKey;
     if (previousModel === undefined) delete process.env.OPENROUTER_MODEL;
     else process.env.OPENROUTER_MODEL = previousModel;
   });
+
+  const { TaskRepository } = await import('../repositories/taskRepository.js');
+  const { askOpenRouter } = await import('./aiService.js');
 
   let title = 'Prepare portfolio';
   const repository = t.mock.method(
