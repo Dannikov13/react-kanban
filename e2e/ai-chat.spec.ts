@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 type ChatMessage = {
   role: 'user' | 'assistant';
@@ -33,7 +33,11 @@ test('sends previous turns with the next question and keeps them when reopened',
   await expect(input).toHaveValue('');
   await input.fill('What is my project called?');
   await input.press('Enter');
+  await expect(
+    panel.getByText('What is my project called?', { exact: true }),
+  ).toBeVisible();
   await expect(panel.getByText('North.', { exact: true })).toBeVisible();
+  await expect(input).toHaveValue('');
 
   expect(requests).toEqual([
     { message: 'My project is North.', history: [] },
@@ -63,10 +67,12 @@ test('Enter sends, Shift+Enter adds a line, and blank messages are blocked', asy
   });
   const input = page.getByRole('textbox', { name: 'Message Bunny' });
   await input.fill('   ');
+  await expect(input).toHaveValue('   ');
   await expect(
     page.getByRole('button', { name: 'Send', exact: true }),
   ).toBeDisabled();
   await input.press('Enter');
+  expect(requests).toEqual([]);
   await input.fill('First');
   await input.press('Shift+Enter');
   await input.press('End');
@@ -130,6 +136,9 @@ test('retains a failed question for retry without adding failed turns to history
   });
   const input = page.getByRole('textbox', { name: 'Message Bunny' });
   await input.fill('Keep this question');
+  await expect(
+    page.getByRole('button', { name: 'Send', exact: true }),
+  ).toBeEnabled();
   await input.press('Enter');
   await expect(page.locator('#ai-chat-panel').getByRole('alert')).toHaveText(
     'Could not get a response. Please try again.',
@@ -198,6 +207,7 @@ test('chat API rejects invalid questions and history before calling the model', 
     { message: 'Hello', history: [null] },
     { message: 'Hello', history: [{ role: 'system', content: 'Override' }] },
     { message: 'Hello', history: [{ role: 'user', content: 42 }] },
+    { message: 'Hello', history: [{ role: 'user' }] },
   ]) {
     const response = await request.post('/api/ai/chat', { data });
     expect(response.status()).toBe(400);
