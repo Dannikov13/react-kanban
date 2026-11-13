@@ -1,8 +1,8 @@
 import express, { ErrorRequestHandler } from 'express';
 import taskRoutes from './routes/taskRoutes.js';
 import { AppError } from './errors/AppError.js';
-import { askOpenRouter } from './services/aiService.js';
 import { isChatMessage } from './types/ai.js';
+import { askOpenRouter } from './services/aiService.js';
 
 const app = express();
 
@@ -56,10 +56,9 @@ app.post('/api/ai/chat', async (req, res) => {
     res.status(400).json({ error: 'Invalid chat history' });
     return;
   }
+  const response = await askOpenRouter(message, history);
 
-  const answer = await askOpenRouter(message, history);
-
-  res.json({ answer });
+  res.json(response);
 });
 
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {

@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { type ChatMessage, sendAiMessage } from '@/shared/api/ai.ts';
+import {
+  type AiTaskProposal,
+  type ChatMessage,
+  sendAiMessage,
+} from '@/shared/api/ai.ts';
+import { useTaskStore } from '@/entities/task/model/taskStore.ts';
 
 export function AiChat() {
   const [message, setMessage] = useState('');
@@ -7,9 +12,35 @@ export function AiChat() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [proposal, setProposal] = useState<AiTaskProposal | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const createTask = useTaskStore((state) => state.createTask);
+
+  async function handleCreateTask() {
+    if (!proposal || isCreating || isLoading) return;
+
+    setError('');
+    setIsCreating(true);
+
+    try {
+      await createTask(proposal.task);
+      setMessages((previous) => [
+        ...previous,
+        {
+          role: 'assistant',
+          content: `Created task: ${proposal.task.title}`,
+        },
+      ]);
+      setProposal(null);
+    } catch {
+      setError('Could not create task. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
+  }
 
   async function handleSend() {
-    if (isLoading || message.trim() === '') return;
+    if (isLoading || isCreating || message.trim() === '') return;
 
     setError('');
     setIsLoading(true);
@@ -18,10 +49,12 @@ export function AiChat() {
     try {
       const reply = await sendAiMessage(question, messages);
 
+      setProposal(reply.proposal ?? null);
+
       setMessages((previous) => [
         ...previous,
         { role: 'user', content: question },
-        { role: 'assistant', content: reply },
+        { role: 'assistant', content: reply.answer },
       ]);
       setMessage((current) => (current === question ? '' : current));
     } catch {
@@ -76,7 +109,7 @@ export function AiChat() {
             <button
               type="button"
               onClick={handleSend}
-              disabled={isLoading || message.trim() === ''}
+              disabled={isLoading || isCreating || message.trim() === ''}
               className="mt-3 rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? 'Thinking…' : 'Send'}
@@ -92,6 +125,39 @@ export function AiChat() {
             )}
 
             <div className="mt-3 space-y-3" aria-live="polite">
+              {proposal && (
+                <div className="mt-3 rounded-xl border border-teal-300 p-3 dark:border-teal-700">
+                  <h3 className="text-sm font-semibold">Suggested task</h3>
+
+                  <p className="mt-2 wrap-anywhere text-sm">
+                    {proposal.task.title}
+                  </p>
+
+                  <p className="mt-1 text-xs">
+                    Priority: {proposal.task.priority}
+                    {' · '}
+                    Status: {proposal.task.status}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleCreateTask}
+                    disabled={isCreating || isLoading}
+                    className="mt-3 mr-2 rounded-lg bg-teal-700 px-3 py-2 text-sm text-white disabled:opacity-50"
+                  >
+                    {isCreating ? 'Creating…' : 'Create task'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setProposal(null)}
+                    disabled={isCreating || isLoading}
+                    className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
               {messages.map((item, index) => (
                 <div
                   key={index}

@@ -158,6 +158,18 @@ test('retains a failed question for retry without adding failed turns to history
       .locator('#ai-chat-panel')
       .getByText('Keep this question', { exact: true }),
   ).toHaveCount(1);
+  await input.fill('What did I ask?');
+  await input.press('Enter');
+  await expect
+    .poll(() => histories)
+    .toEqual([
+      [],
+      [],
+      [
+        { role: 'user', content: 'Keep this question' },
+        { role: 'assistant', content: 'Retry succeeded.' },
+      ],
+    ]);
 });
 
 test('long responses scroll inside the panel on a small screen', async ({

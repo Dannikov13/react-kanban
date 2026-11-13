@@ -1,6 +1,18 @@
+import type { CreateTaskData } from '@/entities/task';
+
 export type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
+};
+
+export type AiTaskProposal = {
+  type: 'create_task';
+  task: CreateTaskData;
+};
+
+export type AiChatResponse = {
+  answer: string;
+  proposal?: AiTaskProposal;
 };
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(
@@ -11,7 +23,7 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(
 export async function sendAiMessage(
   message: string,
   history: ChatMessage[],
-): Promise<string> {
+): Promise<AiChatResponse> {
   const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
     method: 'POST',
     headers: {
@@ -30,5 +42,8 @@ export async function sendAiMessage(
     throw new Error('Bunny returned an empty response');
   }
 
-  return data.answer;
+  return {
+    answer: data.answer,
+    proposal: data.proposal,
+  };
 }

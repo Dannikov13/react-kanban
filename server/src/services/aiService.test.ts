@@ -48,18 +48,23 @@ test('sends history in order and refreshes board context for each question', asy
   const payloads: Array<{
     messages: Array<{ role: string; content: string }>;
   }> = [];
+  let modelMessage: Record<string, unknown> = {
+    content: 'Start here',
+  };
   t.mock.method(
     globalThis,
     'fetch',
     async (_url: unknown, init: RequestInit) => {
       payloads.push(JSON.parse(String(init.body)));
       return Response.json({
-        choices: [{ message: { content: 'Start here' } }],
+        choices: [{ message: modelMessage }],
       });
     },
   );
 
-  assert.equal(await askOpenRouter('What should I do?'), 'Start here');
+  assert.deepEqual(await askOpenRouter('What should I do?'), {
+    answer: 'Start here',
+  });
   title = 'Updated portfolio';
   const history = [
     { role: 'user' as const, content: 'What should I do?' },
@@ -75,4 +80,35 @@ test('sends history in order and refreshes board context for each question', asy
   assert.equal(messages[3].role, 'user');
   assert.match(messages[3].content, /Updated portfolio/);
   assert.match(messages[3].content, /User question:\nWhy\?/);
+  await t.test('returns a task proposal from a tool call', async () => {
+    const task = {
+      title: 'Add confirmation button',
+      priority: 'medium',
+      status: 'todo',
+    };
+
+    modelMessage = {
+      content: null,
+      tool_calls: [
+        {
+          id: 'call_1',
+          type: 'function',
+          function: {
+            name: 'propose_task',
+            arguments: JSON.stringify(task),
+          },
+        },
+      ],
+    };
+
+    const result = await askOpenRouter('Suggest a task');
+
+    assert.deepEqual(result, {
+      answer: 'Предлагаю создать задачу. Подтверди создание карточки.',
+      proposal: {
+        type: 'create_task',
+        task,
+      },
+    });
+  });
 });
