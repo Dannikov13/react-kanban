@@ -1,5 +1,6 @@
 import { TASK_PRIORITIES, TASK_STATUSES } from '../constants/task.js';
 import { CreateTaskData } from '../types/task.js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 export const proposeTaskTool = {
   type: 'function',
@@ -19,6 +20,17 @@ export const proposeTaskTool = {
     },
   },
 };
+
+export function toModelTool(tool: Tool) {
+  return {
+    type: 'function' as const,
+    function: {
+      name: tool.name,
+      description: tool.description ?? '',
+      parameters: tool.inputSchema,
+    },
+  };
+}
 
 export function parseProposedTask(json: string): CreateTaskData {
   const value: unknown = JSON.parse(json);
