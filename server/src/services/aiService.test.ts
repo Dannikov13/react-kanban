@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { isChatMessage } from '../types/ai.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { askOpenRouter } from './aiService.js';
 
 test('accepts chat messages but rejects instructions and malformed history entries', () => {
   assert.equal(isChatMessage({ role: 'user', content: 'Hello' }), true);
@@ -17,91 +19,92 @@ test('accepts chat messages but rejects instructions and malformed history entri
   }
 });
 
-test('sends history in order and refreshes board context for each question', async (t) => {
-  const previousDatabase = process.env.DATABASE_URL;
+test('answers without calling MCP tools', async (t) => {
   const previousKey = process.env.OPENROUTER_API_KEY;
   const previousModel = process.env.OPENROUTER_MODEL;
-  // The repository is mocked; the pool only needs a URL to initialize.
-  process.env.DATABASE_URL = 'postgresql://test:test@127.0.0.1:1/kanban_test';
+
   process.env.OPENROUTER_API_KEY = 'test-key';
   process.env.OPENROUTER_MODEL = 'test-model';
+
   t.after(() => {
-    if (previousDatabase === undefined) delete process.env.DATABASE_URL;
-    else process.env.DATABASE_URL = previousDatabase;
     if (previousKey === undefined) delete process.env.OPENROUTER_API_KEY;
     else process.env.OPENROUTER_API_KEY = previousKey;
+
     if (previousModel === undefined) delete process.env.OPENROUTER_MODEL;
     else process.env.OPENROUTER_MODEL = previousModel;
   });
 
-  const { TaskRepository } = await import('../repositories/taskRepository.js');
-  const { askOpenRouter } = await import('./aiService.js');
-
-  let title = 'Prepare portfolio';
-  const repository = t.mock.method(
-    TaskRepository.prototype,
-    'findAll',
-    async () => [
-      { id: 'task-1', title, status: 'todo', priority: 'high', position: 0 },
-    ],
-  );
-  const payloads: Array<{
-    messages: Array<{ role: string; content: string }>;
-  }> = [];
-  let modelMessage: Record<string, unknown> = {
-    content: 'Start here',
-  };
-  t.mock.method(
-    globalThis,
-    'fetch',
-    async (_url: unknown, init: RequestInit) => {
-      payloads.push(JSON.parse(String(init.body)));
-      return Response.json({
-        choices: [{ message: modelMessage }],
-      });
-    },
-  );
-
-  assert.deepEqual(await askOpenRouter('What should I do?'), {
-    answer: 'Start here',
+  const client = new Client({
+    name: 'bunny-test',
+    version: '1.0.0',
   });
-  title = 'Updated portfolio';
-  const history = [
-    { role: 'user' as const, content: 'What should I do?' },
-    { role: 'assistant' as const, content: 'Start here' },
-  ];
-  await askOpenRouter('Why?', history);
 
-  assert.equal(repository.mock.callCount(), 2);
-  assert.match(payloads[0].messages[1].content, /Prepare portfolio/);
-  const messages = payloads[1].messages;
-  assert.equal(messages[0].role, 'system');
-  assert.deepEqual(messages.slice(1, 3), history);
-  assert.equal(messages[3].role, 'user');
-  assert.match(messages[3].content, /Updated portfolio/);
-  assert.match(messages[3].content, /User question:\nWhy\?/);
-  await t.test('returns a task proposal from a tool call', async () => {
+  t.mock.method(client, 'listTools', async () => ({
+    tools: [],
+  }));
+
+  const callTool = t.mock.method(client, 'callTool', async () => {
+    throw new Error('В этом сценарии вызова инструмента быть не должно');
+  });
+
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json({
+      choices: [
+        {
+          message: {
+            content: 'Привет! Чем помочь?',
+          },
+        },
+      ],
+    }),
+  );
+
+  const result = await askOpenRouter('Привет', [], async (action) =>
+    action(client),
+  );
+
+  assert.deepEqual(result, {
+    answer: 'Привет! Чем помочь?',
+  });
+  assert.equal(callTool.mock.callCount(), 0);
+  await t.test('returns a task proposal without calling MCP', async (t) => {
     const task = {
-      title: 'Add confirmation button',
+      title: 'Разобраться с навыками',
       priority: 'medium',
       status: 'todo',
     };
 
-    modelMessage = {
-      content: null,
-      tool_calls: [
-        {
-          id: 'call_1',
-          type: 'function',
-          function: {
-            name: 'propose_task',
-            arguments: JSON.stringify(task),
-          },
-        },
-      ],
-    };
+    const callTool = t.mock.method(client, 'callTool', async () => {
+      throw new Error('Для предложения карточки MCP не нужен');
+    });
 
-    const result = await askOpenRouter('Suggest a task');
+    t.mock.method(globalThis, 'fetch', async () =>
+      Response.json({
+        choices: [
+          {
+            message: {
+              content: null,
+              tool_calls: [
+                {
+                  id: 'call_proposal_1',
+                  type: 'function',
+                  function: {
+                    name: 'propose_task',
+                    arguments: JSON.stringify(task),
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+
+    const result = await askOpenRouter(
+      'Создай задачу «Разобраться с навыками»',
+      [],
+      async (action) => action(client),
+    );
 
     assert.deepEqual(result, {
       answer: 'Предлагаю создать задачу. Подтверди создание карточки.',
@@ -109,6 +112,143 @@ test('sends history in order and refreshes board context for each question', asy
         type: 'create_task',
         task,
       },
+    });
+    assert.equal(callTool.mock.callCount(), 0);
+  });
+  await t.test('reports an MCP tool error', async (t) => {
+    t.mock.method(client, 'listTools', async () => ({
+      tools: [
+        {
+          name: 'list_tasks',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+      ],
+    }));
+
+    t.mock.method(client, 'callTool', async () => ({
+      isError: true,
+      content: [
+        {
+          type: 'text',
+          text: 'База данных недоступна',
+        },
+      ],
+    }));
+
+    const fetchMock = t.mock.method(globalThis, 'fetch', async () =>
+      Response.json({
+        choices: [
+          {
+            message: {
+              content: null,
+              tool_calls: [
+                {
+                  id: 'call_error_1',
+                  type: 'function',
+                  function: {
+                    name: 'list_tasks',
+                    arguments: '{}',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+
+    await assert.rejects(
+      () =>
+        askOpenRouter('Какие задачи на доске?', [], async (action) =>
+          action(client),
+        ),
+      { message: 'Не удалось получить задачи через MCP' },
+    );
+
+    assert.equal(fetchMock.mock.callCount(), 1);
+  });
+  await t.test('passes MCP results back to the model', async (t) => {
+    t.mock.method(client, 'listTools', async () => ({
+      tools: [
+        {
+          name: 'list_tasks',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+      ],
+    }));
+
+    const toolResult = {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify([{ title: 'Изучить MCP' }]),
+        },
+      ],
+    };
+
+    const listTasks = t.mock.method(client, 'callTool', async () => toolResult);
+
+    const replies = [
+      {
+        content: null,
+        tool_calls: [
+          {
+            id: 'call_tasks_1',
+            type: 'function',
+            function: {
+              name: 'list_tasks',
+              arguments: '{}',
+            },
+          },
+        ],
+      },
+      {
+        content: 'На доске задача: Изучить MCP.',
+      },
+    ];
+
+    const requests: Array<{
+      messages: Array<Record<string, unknown>>;
+    }> = [];
+
+    t.mock.method(
+      globalThis,
+      'fetch',
+      async (_url: unknown, init: RequestInit) => {
+        const reply = replies[requests.length];
+        requests.push(JSON.parse(String(init.body)));
+
+        return Response.json({
+          choices: [{ message: reply }],
+        });
+      },
+    );
+
+    const result = await askOpenRouter(
+      'Какие задачи на доске?',
+      [],
+      async (action) => action(client),
+    );
+
+    assert.deepEqual(result, {
+      answer: 'На доске задача: Изучить MCP.',
+    });
+    assert.equal(listTasks.mock.callCount(), 1);
+    assert.deepEqual(listTasks.mock.calls[0].arguments[0], {
+      name: 'list_tasks',
+      arguments: {},
+    });
+    assert.equal(requests.length, 2);
+    assert.deepEqual(requests[1].messages.at(-1), {
+      role: 'tool',
+      tool_call_id: 'call_tasks_1',
+      content: JSON.stringify(toolResult.content),
     });
   });
 });
