@@ -1,9 +1,8 @@
 import { z } from 'zod';
-
 import { withKanbanMcp } from '../mcp/withKanbanMcp.js';
 import type { AiChatResponse, ChatMessage } from '../types/ai.js';
-
 import { parseProposedTask, proposeTaskTool, toModelTool } from './aiTools.js';
+import { readFile } from 'node:fs/promises';
 
 const toolCallsSchema = z.array(
   z.object({
@@ -19,6 +18,7 @@ const toolCallsSchema = z.array(
 export async function askOpenRouter(
   message: string,
   history: ChatMessage[] = [],
+  connectMcp = withKanbanMcp,
 ): Promise<AiChatResponse> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const model = process.env.OPENROUTER_MODEL;
@@ -27,7 +27,12 @@ export async function askOpenRouter(
     throw new Error('Не настроены OPENROUTER_API_KEY или OPENROUTER_MODEL');
   }
 
-  return withKanbanMcp(async (client): Promise<AiChatResponse> => {
+  const dailyPlanningSkill = await readFile(
+    new URL('../skills/daily-planning/SKILL.md', import.meta.url),
+    'utf8',
+  );
+
+  return connectMcp(async (client): Promise<AiChatResponse> => {
     const { tools } = await client.listTools();
 
     const modelTools = [
@@ -47,7 +52,8 @@ export async function askOpenRouter(
           'When asked to create a task, use propose_task to prepare a preview.',
           'A proposed task is saved only after the user clicks Create task.',
           'Never claim that a proposal is already saved.',
-        ].join(' '),
+          dailyPlanningSkill,
+        ].join('\n\n'),
       },
       ...history.map(({ role, content }) => ({ role, content })),
       {
