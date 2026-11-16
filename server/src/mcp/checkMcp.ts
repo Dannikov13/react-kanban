@@ -10,15 +10,25 @@ async function main() {
 
     console.dir(tools.map(toModelTool), { depth: null });
 
-    const result = await client.callTool({
+    const allTasks = await client.callTool({
       name: 'list_tasks',
       arguments: {},
+    });
+
+    console.log('Все карточки, которые видит MCP:');
+    console.dir(allTasks, { depth: null });
+
+    const result = await client.callTool({
+      name: 'search_tasks',
+      arguments: {
+        query: 'архитектуру',
+      },
     });
 
     console.dir(result, { depth: null });
 
     if (result.isError) {
-      throw new Error('Инструмент list_tasks завершился с ошибкой');
+      throw new Error('Инструмент search_tasks завершился с ошибкой');
     }
   });
 }
